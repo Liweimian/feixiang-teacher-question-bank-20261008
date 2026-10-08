@@ -33,6 +33,7 @@
     workbench: svg('<rect x="4" y="5" width="7" height="6" rx="1.5"/><rect x="13" y="5" width="7" height="6" rx="1.5"/><rect x="4" y="13" width="7" height="6" rx="1.5"/><path d="M16.5 13v6M13.5 16h6"/>'),
     elephant: svg('<path d="M7 8.5c0-2.2 1.8-4 4-4 1.2 0 2.3.5 3.1 1.4.8-.9 1.9-1.4 3.1-1.4 2.2 0 4 1.8 4 4 0 1.1-.4 2.1-1.1 2.9 1.4.8 2.4 2.3 2.4 4.1 0 2.5-2 4.5-4.5 4.5H8.5C6 19.5 4 17.5 4 15c0-1.8 1-3.3 2.4-4.1-.7-.8-1.1-1.8-1.1-2.9Z"/><circle cx="9.5" cy="9" r="1"/><circle cx="14.5" cy="9" r="1"/><path d="M10 13.5c.8.6 1.7.9 2.7.9s1.9-.3 2.6-.9"/>'),
     trash: svg('<path d="M5 7h14M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/>'),
+    tag: svg('<path d="M20 13 13 20 4 11V4h7z"/><circle cx="8.5" cy="8.5" r="1.5"/>'),
     grip: svg('<circle cx="9" cy="5" r="1.35"/><circle cx="9" cy="12" r="1.35"/><circle cx="9" cy="19" r="1.35"/><circle cx="15" cy="5" r="1.35"/><circle cx="15" cy="12" r="1.35"/><circle cx="15" cy="19" r="1.35"/>'),
     save: svg('<path d="M5 4h12l2 2v14H5z"/><path d="M8 4v5h8V4M8 18h8"/>'),
   }
@@ -156,7 +157,19 @@
     source: 'ai-record',
   }))
 
-  let personalQuestions = []
+  let personalQuestions = aiHistoryQuestions.map((question, index) => ({
+    ...question,
+    curriculumTags: [question.curriculum],
+    typeTags: index === 0 ? [question.type, '计算题'] : [question.type],
+    difficultyTags: [question.difficulty],
+    knowledgeTags: index === 0
+      ? [question.knowledge, '三位数乘两位数']
+      : index === 1
+        ? [question.knowledge, '数量关系']
+        : [question.knowledge],
+    customTags: index % 2 === 0 ? ['重点复习'] : ['计算专项'],
+  }))
+  let personalTagCatalog = ['重点复习', '计算专项']
   let aiImportRecords = [
     { id: 'record-complete', filename: '四年级数学综合练习.pdf', status: 'completed', stage: '解析完成', submittedAt: '09-06 16:20', completedAt: '09-06 16:27', questions: aiHistoryQuestions },
     { id: 'record-processing', filename: '四年级上册期末复习.docx', status: 'processing', stage: '正在提取题目与答案', submittedAt: '今天 10:28', eta: '预计还需 4–10 分钟', questions: [] },
@@ -191,11 +204,11 @@
   }
 
   let aiComposeRecords = [
-    seedAiComposeHistoryRecord('compose-h-1', '帮我生成一份 七年级上册数学期末考试模拟题', Date.parse('2026-08-03T10:00:00')),
-    seedAiComposeHistoryRecord('compose-h-2', '帮我出一份北京市西城区小学数学5年级上期末考试试卷', Date.parse('2026-08-03T09:00:00')),
-    seedAiComposeHistoryRecord('compose-h-3', '帮我出3道英语听力题 初中7年级北京海淀区', Date.parse('2026-05-27T10:00:00'), 3),
-    seedAiComposeHistoryRecord('compose-h-4', '帮我出一份北京市西城区小学数学5年级上期末考试试卷', Date.parse('2026-05-21T10:00:00')),
-    seedAiComposeHistoryRecord('compose-h-5', '帮我出一份北京市西城区小学数学5年级上期末考试试卷', Date.parse('2026-04-16T10:00:00')),
+    seedAiComposeHistoryRecord('compose-h-1', '从题库组一份七年级上册数学期末模拟题单', Date.parse('2026-08-03T10:00:00')),
+    seedAiComposeHistoryRecord('compose-h-2', '从题库组一份北京市西城区小学五年级上期末试卷', Date.parse('2026-08-03T09:00:00')),
+    seedAiComposeHistoryRecord('compose-h-3', '从题库挑 3 道初中七年级英语听力题', Date.parse('2026-05-27T10:00:00'), 3),
+    seedAiComposeHistoryRecord('compose-h-4', '组一份北京市西城区小学五年级上期末试卷', Date.parse('2026-05-21T10:00:00')),
+    seedAiComposeHistoryRecord('compose-h-5', '组一份小学五年级数学期末基础题单', Date.parse('2026-04-16T10:00:00')),
   ]
 
   const curriculumCatalog = {
@@ -217,6 +230,44 @@
     '高中历史': { subject: '高一 · 历史', groups: [['全部知识点',1],['中国古代史',1],['秦汉时期',1]], parents: { '中国古代史':['秦汉时期'] } },
     '高中地理': { subject: '高一 · 地理', groups: [['全部知识点',1],['自然地理',1],['地貌',1]], parents: { '自然地理':['地貌'] } },
     '高中政治': { subject: '高一 · 政治', groups: [['全部知识点',1],['经济生活',1],['市场经济',1]], parents: { '经济生活':['市场经济'] } },
+  }
+
+  const SYSTEM_QUESTION_TYPE_TAGS = ['选择题', '填空题', '判断题', '解答题', '计算题']
+
+  function tagList(value, fallback = '') {
+    const source = Array.isArray(value) && value.length
+      ? value
+      : Array.isArray(fallback)
+        ? fallback
+        : fallback ? [fallback] : []
+    return [...new Set(source.map((item) => String(item || '').trim()).filter(Boolean))]
+  }
+
+  function questionCurriculumTags(question) {
+    return tagList(question.curriculumTags, question.curriculum)
+  }
+
+  function questionTypeTags(question) {
+    return tagList(question.typeTags, question.type)
+  }
+
+  function questionDifficultyTags(question) {
+    return tagList(question.difficultyTags, question.difficulty)
+  }
+
+  function questionKnowledgeTags(question) {
+    return tagList(question.knowledgeTags, question.knowledge)
+  }
+
+  function curriculumTagLabel(value) {
+    const match = String(value || '').match(/^(小学|初中|高中)(.+)$/)
+    return match ? `${match[1]} · ${match[2]}` : String(value || '')
+  }
+
+  function knowledgeOptionsForCurriculums(curriculums = []) {
+    return [...new Set(curriculums.flatMap((key) => (curriculumCatalog[key]?.groups || [])
+      .map(([name]) => name)
+      .filter((name) => name !== '全部知识点')))]
   }
 
   const PRIMARY_VOLUME_LABELS = ['一年级上册', '一年级下册', '二年级上册', '二年级下册', '三年级上册', '三年级下册', '四年级上册', '四年级下册', '五年级上册', '五年级下册', '六年级上册', '六年级下册']
@@ -317,11 +368,25 @@
   let importMenuOpen = false
   let knowledgeModalOpen = false
   let importWorkspaceView = 'library'
-  let openWorkspaceTabs = []
   let activeImportRecordId = ''
   let activeAiComposeRecordId = ''
   let previewKnowledgePaperId = ''
   let personalLibraryMode = 'questions'
+  let personalCollection = 'all'
+  let personalCurriculumFilter = 'all'
+  let personalKnowledgeFilter = 'all'
+  let selectedPersonalQuestionIds = new Set()
+  let personalBatchMode = false
+  let aiRecordingDrawerOpen = false
+  let personalImportRecordViewId = ''
+  let personalImportReturnScrollTop = 0
+  let personalTagEditorQuestionIds = []
+  let pendingPersonalTags = new Set()
+  let questionLabelEditorId = ''
+  let questionLabelEditorFocus = 'curriculum'
+  let questionLabelDraft = null
+  let questionLabelDropdownOpen = ''
+  let questionLabelDropdownQuery = ''
   let adaptRequest = null
   let adaptPicker = null
   let sheetDragId = ''
@@ -582,6 +647,11 @@
   function cloneQuestion(question, extra = {}) {
     return {
       ...question,
+      curriculumTags: [...questionCurriculumTags(question)],
+      typeTags: [...questionTypeTags(question)],
+      difficultyTags: [...questionDifficultyTags(question)],
+      knowledgeTags: [...questionKnowledgeTags(question)],
+      customTags: [...(question.customTags || [])],
       id: makeId('sheet'),
       sourceId: question.id,
       sourceSnapshot: { text: question.text || '', options: [...(question.options || [])] },
@@ -1174,10 +1244,11 @@
   function questionMatchesTreeNode(question, name, tree = activeTree()) {
     if (!name || name === '全部知识点') return true
     const aliases = [name, ...(tree.aliases?.[name] || [])]
+    const knowledgeTags = questionKnowledgeTags(question)
     if (tree.parents[name]) {
-      return aliases.includes(question.knowledge) || tree.parents[name].some((child) => questionMatchesTreeNode(question, child, tree))
+      return aliases.some((alias) => knowledgeTags.includes(alias)) || tree.parents[name].some((child) => questionMatchesTreeNode(question, child, tree))
     }
-    return aliases.includes(question.knowledge)
+    return aliases.some((alias) => knowledgeTags.includes(alias))
   }
 
   function expandDefaultChapters() {
@@ -1213,8 +1284,13 @@
 
   function switchToLibraryTab(source) {
     saveBankSearchToStorage()
+    aiRecordingDrawerOpen = false
+    personalImportRecordViewId = ''
+    personalImportReturnScrollTop = 0
     importWorkspaceView = 'library'
     questionSource = source === 'personal' ? 'personal' : 'official'
+    selectedPersonalQuestionIds = new Set()
+    personalBatchMode = false
     if (questionSource === 'official') {
       previewBankPaperId = ''
       previewKnowledgePaperId = ''
@@ -1228,8 +1304,12 @@
 
   function openPersonalPapersLibrary(paperId = '') {
     saveBankSearchToStorage()
+    personalImportRecordViewId = ''
+    personalImportReturnScrollTop = 0
     importWorkspaceView = 'library'
     questionSource = 'personal'
+    selectedPersonalQuestionIds = new Set()
+    personalBatchMode = false
     personalLibraryMode = 'papers'
     previewKnowledgePaperId = paperId
     previewBankPaperId = ''
@@ -1237,16 +1317,58 @@
     officialPage = 1
   }
 
+  function openAiRecording() {
+    if (importWorkspaceView !== 'library' || questionSource !== 'personal') {
+      switchToLibraryTab('personal')
+      personalLibraryMode = 'questions'
+      importWorkspaceView = 'library'
+    }
+    aiRecordingDrawerOpen = true
+  }
+
   function knowledgePapersPageMarkup() {
-    return `<div class="wb3-knowledge-page"><div class="wb3-import-page-title"><div><h2>我的题单</h2><p class="wb3-knowledge-path">${escapeHtml(KNOWLEDGE_COMPOSE_FOLDER)}</p><small>这里展示你已保存的题单，可整份或逐题加入当前题单。</small></div></div><div class="wb3-knowledge-grid">${allKnowledgePapers().length ? allKnowledgePapers().map((paper) => `<article><span>${icons.blank}</span><div><b>${escapeHtml(paper.title)}</b><small>${escapeHtml(paper.meta)}</small></div><div><button type="button" data-preview-knowledge="${paper.id}">查看</button></div></article>`).join('') : '<p class="wb3-record-empty">还没有保存的题单，请先在右侧画布组题并点击保存</p>'}</div></div>`
+    const papers = allKnowledgePapers()
+    return `<div class="wb3-knowledge-page"><div class="wb3-import-page-title"><div><h2>我的题单</h2><p class="wb3-knowledge-path">${escapeHtml(KNOWLEDGE_COMPOSE_FOLDER)}</p><small>这里展示你已保存的题单，可整份或逐题加入当前题单。</small></div></div>${papers.length ? `<div class="wb3-knowledge-grid">${papers.map((paper) => `<article><span>${icons.blank}</span><div><b>${escapeHtml(paper.title)}</b><small>${escapeHtml(paper.meta)}</small></div><div><button type="button" data-preview-knowledge="${paper.id}">查看</button></div></article>`).join('')}</div>` : personalPapersEmptyMarkup()}</div>`
+  }
+
+  function personalPapersEmptyMarkup() {
+    return `<div class="wb3-empty-results wb3-empty-papers"><b>还没有题单</b><p>从右侧「当前题单」开始组题，组好后点击保存，就会出现在这里。</p></div>`
   }
 
   function personalLibrarySubtabsMarkup() {
-    return `<div class="wb3-personal-subtabs" role="tablist" aria-label="我的题库内容"><button type="button" role="tab" data-personal-library="questions" aria-selected="${personalLibraryMode === 'questions'}" class="${personalLibraryMode === 'questions' ? 'active' : ''}">试题</button><button type="button" role="tab" data-personal-library="papers" aria-selected="${personalLibraryMode === 'papers'}" class="${personalLibraryMode === 'papers' ? 'active' : ''}">题单</button></div>`
+    const processingCount = aiImportRecords.filter((record) => record.status === 'processing').length
+    const unreadCount = aiImportRecords.filter((record) => record.status === 'completed' && record.unread).length
+    const statusText = processingCount ? `，${processingCount}个任务处理中` : unreadCount ? `，${unreadCount}个任务已完成` : ''
+    return `<div class="wb3-personal-subtabs"><div class="wb3-personal-tabs" role="tablist" aria-label="我的题库内容"><button type="button" role="tab" data-personal-library="questions" aria-selected="${personalLibraryMode === 'questions'}" class="${personalLibraryMode === 'questions' ? 'active' : ''}">试题</button><button type="button" role="tab" data-personal-library="papers" aria-selected="${personalLibraryMode === 'papers'}" class="${personalLibraryMode === 'papers' ? 'active' : ''}">题单</button></div><div class="wb3-personal-import-action"><span class="wb3-personal-import-hint">上传试卷，AI 自动识别并录入题库</span><button type="button" class="wb3-personal-header-import wb3-personal-subtab-import ${aiRecordingDrawerOpen ? 'is-open' : ''}" data-open-personal-import aria-label="上传文件${statusText}" aria-expanded="${aiRecordingDrawerOpen}">${icons.upload}<span>上传文件</span>${processingCount ? `<em class="wb3-ai-recording-badge processing">${Math.min(processingCount, 99)}</em>` : unreadCount ? `<em class="wb3-ai-recording-badge completed">${Math.min(unreadCount, 99)}</em>` : ''}</button></div></div>`
+  }
+
+  function personalQuestionMatchesCollection(question, collection = personalCollection) {
+    if (collection === 'all') return true
+    if (collection.startsWith('tag:')) return (question.customTags || []).includes(collection.slice(4))
+    return true
+  }
+
+  function personalCollectionCount(collection) {
+    return personalQuestions.filter((question) => personalQuestionMatchesCollection(question, collection)).length
+  }
+
+  function personalTagOptions() {
+    return [...new Set([...personalTagCatalog, ...personalQuestions.flatMap((question) => question.customTags || []), ...pendingPersonalTags])]
+  }
+
+  function personalCurriculumOptions() {
+    return [...new Set(personalQuestions.flatMap((question) => questionCurriculumTags(question)))]
+  }
+
+  function personalKnowledgeOptions() {
+    return [...new Set(personalQuestions
+      .filter((question) => personalCurriculumFilter === 'all' || questionCurriculumTags(question).includes(personalCurriculumFilter))
+      .flatMap((question) => questionKnowledgeTags(question))
+      .filter(Boolean))]
   }
 
   function personalPapersListMarkup(papers) {
-    if (!papers.length) return '<div class="wb3-empty-results"><b>还没有题单</b><p>在右侧画布组题并点击保存后，会出现在这里。</p></div>'
+    if (!papers.length) return personalPapersEmptyMarkup()
     return `<div class="wb3-bank-paper-list">${papers.map((paper) => `<article class="wb3-bank-paper-card"><span class="wb3-paper-card-icon">${icons.blank}</span><div><b>${escapeHtml(paper.title)}</b><small>${escapeHtml(paper.meta)}</small></div><div><button type="button" data-edit-knowledge-paper="${paper.id}">编辑</button><button type="button" data-preview-knowledge="${paper.id}">查看</button><button type="button" data-delete-knowledge-paper="${paper.id}">删除</button></div></article>`).join('')}</div>`
   }
 
@@ -1266,9 +1388,18 @@
     return `<div class="wb3-bank-paper-list">${papers.map((paper) => `<article class="wb3-bank-paper-card"><div><b>${escapeHtml(paper.title)}</b><small>${escapeHtml(paper.meta)}</small></div><div><button type="button" data-preview-bank-paper="${paper.id}">查看题目</button><button type="button" class="primary" data-import-bank-paper="${paper.id}">全部选用</button></div></article>`).join('')}</div>`
   }
 
+  function currentPersonalImportRecord() {
+    return aiImportRecords.find((record) => record.id === personalImportRecordViewId && record.status === 'completed') || null
+  }
+
   function currentBankQuestions() {
     if (questionSource === 'personal') {
-      return personalQuestions.filter((question) => question.curriculum === curriculumKey)
+      const importRecord = currentPersonalImportRecord()
+      if (importRecord) {
+        const importedIds = new Set((importRecord.questions || []).map((question) => question.id))
+        return personalQuestions.filter((question) => importedIds.has(question.id))
+      }
+      return personalQuestions.filter((question) => personalQuestionMatchesCollection(question))
     }
     return bankQuestions.filter((question) => question.curriculum === curriculumKey)
   }
@@ -1293,6 +1424,15 @@
     const tree = activeTree()
     const treeQuery = treeSearchQuery.trim().toLowerCase()
     return currentBankQuestions().filter((question) => {
+      if (questionSource === 'personal') {
+        if (!treeQuery) return true
+        return questionKnowledgeTags(question).some((tag) => tag.toLowerCase().includes(treeQuery))
+          || questionCurriculumTags(question).some((tag) => curriculumTagLabel(tag).toLowerCase().includes(treeQuery))
+          || questionTypeTags(question).some((tag) => tag.toLowerCase().includes(treeQuery))
+          || question.text.toLowerCase().includes(treeQuery)
+          || (question.customTags || []).some((tag) => tag.toLowerCase().includes(treeQuery))
+          || (question.options || []).some((option) => option.toLowerCase().includes(treeQuery))
+      }
       if (treeQuery) {
         return question.knowledge.toLowerCase().includes(treeQuery)
           || question.text.toLowerCase().includes(treeQuery)
@@ -1308,15 +1448,25 @@
     const tree = activeTree()
     const treeQuery = treeSearchQuery.trim().toLowerCase()
     const scoped = currentBankQuestions().filter((question) => {
-      const scopeMatch = treeQuery
+      const scopeMatch = questionSource === 'personal'
+        ? !treeQuery
+          || questionKnowledgeTags(question).some((tag) => tag.toLowerCase().includes(treeQuery))
+          || questionCurriculumTags(question).some((tag) => curriculumTagLabel(tag).toLowerCase().includes(treeQuery))
+          || questionTypeTags(question).some((tag) => tag.toLowerCase().includes(treeQuery))
+          || question.text.toLowerCase().includes(treeQuery)
+          || (question.customTags || []).some((tag) => tag.toLowerCase().includes(treeQuery))
+          || (question.options || []).some((option) => option.toLowerCase().includes(treeQuery))
+        : treeQuery
         ? question.knowledge.toLowerCase().includes(treeQuery)
           || question.text.toLowerCase().includes(treeQuery)
           || (question.options || []).some((option) => option.toLowerCase().includes(treeQuery))
           || Object.entries(tree.parents).some(([parent, children]) => parent.toLowerCase().includes(treeQuery) && children.includes(question.knowledge))
         : questionMatchesTreeNode(question, activeKnowledge, tree)
-      const typeMatch = filterType === '全部题型' || question.type === filterType
-      const difficultyMatch = filterDifficulty === '全部难度' || question.difficulty === filterDifficulty
-      return scopeMatch && typeMatch && difficultyMatch
+      const typeMatch = filterType === '全部题型' || (questionSource === 'personal' ? questionTypeTags(question).includes(filterType) : question.type === filterType)
+      const difficultyMatch = filterDifficulty === '全部难度' || (questionSource === 'personal' ? questionDifficultyTags(question).includes(filterDifficulty) : question.difficulty === filterDifficulty)
+      const curriculumMatch = questionSource !== 'personal' || personalCurriculumFilter === 'all' || questionCurriculumTags(question).includes(personalCurriculumFilter)
+      const knowledgeMatch = questionSource !== 'personal' || personalKnowledgeFilter === 'all' || questionKnowledgeTags(question).includes(personalKnowledgeFilter)
+      return scopeMatch && curriculumMatch && knowledgeMatch && typeMatch && difficultyMatch
     })
     if (questionSource === 'official') {
       return scoped.sort((a, b) => (Number(b.onlineAt || 0) - Number(a.onlineAt || 0)) || String(a.id).localeCompare(String(b.id)))
@@ -1325,8 +1475,11 @@
   }
 
   function emptyResultsMarkup(filteredCount, treeScopedCount) {
-    if (questionSource === 'personal' && currentBankQuestions().length === 0) {
-      return `<div class="wb3-empty-results wb3-empty-personal"><b>还没有题目</b><p>上传题目和答案文件，AI 识别并打标，自动存入我的题库后即可在此选用</p><button type="button" class="wb3-empty-upload-btn primary" data-empty-import="upload">${icons.upload}上传文件</button></div>`
+    if (questionSource === 'personal' && personalQuestions.length === 0) {
+      return `<div class="wb3-empty-results wb3-empty-personal"><b>还没有题目</b><p>上传 Word、PDF 或图片，AI 自动识别题目和答案并录入我的题库</p><button type="button" class="wb3-empty-upload-btn primary" data-empty-import="upload">${icons.upload}上传文件</button></div>`
+    }
+    if (questionSource === 'personal') {
+      return `<div class="wb3-empty-results"><b>未找到符合条件的题目</b><button type="button" class="wb3-empty-upload-btn" data-clear-bank-filters>清除筛选</button></div>`
     }
     if (treeScopedCount === 0 && !treeSearchQuery.trim()) {
       return `<div class="wb3-empty-results">暂无题目</div>`
@@ -1396,31 +1549,49 @@
     }[id] || `围绕“${question.knowledge || '本题考点'}”提取条件，选择对应公式或关系，分步推理并核对结果。`
   }
 
+  function personalQuestionLabelGroupMarkup(question, group, title, values, { formatter = (value) => value, emptyText = '待完善' } = {}) {
+    const labels = values.map(formatter).filter(Boolean)
+    const displayText = labels.length ? labels.join('、') : emptyText
+    const tooltip = `${title}：${displayText}`
+    return `<span class="wb3-question-label-group group-${group}"><button type="button" class="wb3-question-label-chip ${labels.length ? '' : 'empty'}" data-open-question-label-editor="${escapeHtml(question.id)}" data-label-editor-focus="${group}" aria-label="编辑${escapeHtml(tooltip)}" title="${escapeHtml(tooltip)}">${escapeHtml(displayText)}</button></span>`
+  }
+
+  function personalQuestionLabelsMarkup(question, actionsMarkup) {
+    const curriculumGroup = personalQuestionLabelGroupMarkup(question, 'curriculum', '阶段·科目', questionCurriculumTags(question), { formatter: curriculumTagLabel })
+    const typeGroup = personalQuestionLabelGroupMarkup(question, 'type', '题型', questionTypeTags(question))
+    const difficultyGroup = personalQuestionLabelGroupMarkup(question, 'difficulty', '难度', questionDifficultyTags(question))
+    const knowledgeGroup = personalQuestionLabelGroupMarkup(question, 'knowledge', '知识点', questionKnowledgeTags(question))
+    const customGroup = personalQuestionLabelGroupMarkup(question, 'custom', '自定义标签', question.customTags || [], { emptyText: '+ 标签' })
+    return `<div class="wb3-question-labels"><div class="wb3-question-label-stream">${curriculumGroup}${typeGroup}${difficultyGroup}${knowledgeGroup}${customGroup}</div><button type="button" class="wb3-question-label-edit" data-open-question-label-editor="${escapeHtml(question.id)}" data-label-editor-focus="curriculum" aria-label="编辑题目标签" title="编辑题目标签">${icons.tag}</button>${actionsMarkup}</div>`
+  }
+
   function questionCardMarkup(question, addedMap) {
     const addedIndex = addedMap.get(question.id)
     const answerShown = revealedAnswerIds.has(question.id)
     const answerText = questionAnswerText(question)
     const adapting = (adaptRequest?.inline && adaptRequest.source.id === question.id) || adaptPicker?.source.id === question.id
-    const canDeletePersonal = importWorkspaceView === 'library' && questionSource === 'personal' && personalQuestions.some((item) => item.id === question.id)
-    return `<article class="wb3-qcard ${addedIndex ? 'added' : ''} ${answerShown ? 'answer-open' : ''} ${adapting ? 'adapting' : ''}" data-qid="${question.id}">
+    const canManagePersonal = importWorkspaceView === 'library' && questionSource === 'personal' && personalQuestions.some((item) => item.id === question.id)
+    const selectedForTags = selectedPersonalQuestionIds.has(question.id)
+    const cardActions = `<span class="wb3-qcard-actions">
+      ${canManagePersonal ? `<button type="button" class="delete" data-delete-personal-question="${question.id}" title="从我的题库删除" aria-label="从我的题库删除">${icons.trash}</button>` : ''}
+      <button type="button" class="answer" data-quick-answer="${question.id}" title="${answerShown ? '收起答案' : '显示答案'}" aria-label="${answerShown ? '收起答案' : '显示答案'}">答</button>
+      <button type="button" class="adapt" data-quick-adapt="${question.id}" title="AI 改编" aria-label="AI 改编">${icons.sparkle}</button>
+      <button type="button" data-quick-add="${question.id}" title="${addedIndex ? '取消选用' : '选用题目'}" aria-label="${addedIndex ? '取消选用' : '选用题目'}">${addedIndex ? icons.check : icons.plus}</button>
+    </span>`
+    const personalLabels = canManagePersonal ? personalQuestionLabelsMarkup(question, cardActions) : ''
+    const defaultTags = canManagePersonal ? '' : `<span class="wb3-qcard-tags"><span>${escapeHtml(question.type)}</span><span>${escapeHtml(question.difficulty)}</span><span>${escapeHtml(question.knowledge)}</span></span>`
+    return `<article class="wb3-qcard ${addedIndex ? 'added' : ''} ${answerShown ? 'answer-open' : ''} ${adapting ? 'adapting' : ''} ${canManagePersonal ? 'wb3-qcard--personal' : ''} ${canManagePersonal && personalBatchMode ? 'is-batch-mode' : ''} ${selectedForTags ? 'selected-for-tags' : ''}" data-qid="${question.id}">
       ${addedIndex ? `<span class="wb3-added-status">已加入 · 第 ${addedIndex} 题</span>` : ''}
-      <span>
-        <span class="wb3-qcard-tags">
-          <span>${escapeHtml(question.type)}</span>
-          <span>${escapeHtml(question.difficulty)}</span>
-          <span>${escapeHtml(question.knowledge)}</span>
-        </span>
+      <div class="wb3-qcard-main">
+        ${defaultTags}
         <p>${escapeHtml(question.text)}</p>
         ${question.options?.length ? `<span class="wb3-qcard-options">${question.options.map((option) => `<span>${escapeHtml(option)}</span>`).join('')}</span>` : ''}
+        ${personalLabels}
         ${answerShown ? `<span class="wb3-qcard-answer"><span><b>答案</b>${escapeHtml(answerText)}</span><span><b>解析</b>${escapeHtml(questionAnalysisText(question))}</span></span>` : ''}
-      </span>
-      <span class="wb3-qcard-actions">
-        ${canDeletePersonal ? `<button type="button" class="delete" data-delete-personal-question="${question.id}" title="从我的题库删除" aria-label="从我的题库删除">${icons.trash}</button>` : ''}
-        <button type="button" class="answer" data-quick-answer="${question.id}" title="${answerShown ? '收起答案' : '显示答案'}" aria-label="${answerShown ? '收起答案' : '显示答案'}">答</button>
-        <button type="button" class="adapt" data-quick-adapt="${question.id}" title="AI 改编" aria-label="AI 改编">${icons.sparkle}</button>
-        <button type="button" data-quick-add="${question.id}" title="${addedIndex ? '取消选用' : '选用题目'}" aria-label="${addedIndex ? '取消选用' : '选用题目'}">${addedIndex ? icons.check : icons.plus}</button>
-      </span>
+      </div>
+      ${canManagePersonal ? '' : cardActions}
       ${inlineAdaptMarkup(question)}
+      ${canManagePersonal && personalBatchMode ? `<label class="wb3-personal-question-select" title="选择该题"><input type="checkbox" data-select-personal-question="${question.id}" ${selectedForTags ? 'checked' : ''}><span aria-hidden="true"></span><i class="sr-only">选择该题</i></label>` : ''}
     </article>`
   }
 
@@ -1452,10 +1623,10 @@
   function importMenuMarkup() {
     if (!importMenuOpen) return ''
     return `<div class="wb3-import-menu" role="menu">
-      <button type="button" data-import="upload" role="menuitem">${icons.upload}<span><b>上传文件</b><small>上传题目和答案文件，AI 识别并打标，自动存入我的题库</small></span></button>
+      <button type="button" data-import="upload" role="menuitem">${icons.upload}<span><b>上传文件</b><small>上传试卷，AI 自动识别并录入我的题库</small></span></button>
       <button type="button" data-import="history" role="menuitem">${icons.blank}<span><b>AI录题记录</b><small>${aiImportRecords.filter((record) => record.status === 'processing').length} 个解析中 · 可复用历史结果</small></span></button>
       <button type="button" data-import="knowledge" role="menuitem">${icons.knowledge}<span><b>我的知识库</b><small>按整份题单预览或导入</small></span></button>
-      <button type="button" data-import="ai-compose" role="menuitem">${icons.sparkle}<span><b>AI组题记录</b><small>查看 AI 生成的整套题目</small></span></button>
+      <button type="button" data-import="ai-compose" role="menuitem">${icons.sparkle}<span><b>AI组题记录</b><small>查看 AI 从题库匹配的题单</small></span></button>
     </div>`
   }
 
@@ -1520,19 +1691,6 @@
     'ai-compose': { label: '历史AI组题', view: 'ai-compose' },
   }
 
-  function activeWorkspaceTabId() {
-    if (importWorkspaceView === 'library') return questionSource === 'personal' ? 'personal' : 'library'
-    if (importWorkspaceView === 'add-more') return 'add-more'
-    if (importWorkspaceView === 'ai-entry') return 'ai-create'
-    if (importWorkspaceView === 'ai-record') return `record:${activeImportRecordId}`
-    if (['ai-upload', 'ai-history'].includes(importWorkspaceView)) return 'upload'
-    if (importWorkspaceView === 'knowledge' && previewKnowledgePaperId) return `paper:${previewKnowledgePaperId}`
-    if (importWorkspaceView === 'knowledge') return 'knowledge'
-    if (importWorkspaceView === 'ai-compose-record') return `compose:${activeAiComposeRecordId}`
-    if (importWorkspaceView === 'ai-compose') return 'ai-compose'
-    return 'add-more'
-  }
-
   function workspaceTabInfo(id) {
     if (workspaceTabCatalog[id]) return workspaceTabCatalog[id]
     if (id.startsWith('paper:')) {
@@ -1551,11 +1709,21 @@
   }
 
   function workspaceTabsMarkup() {
-    const active = activeWorkspaceTabId()
-    return `<nav class="wb3-workspace-tabs" aria-label="组题来源"><span class="wb3-workspace-brand"><button type="button" data-action="exit" aria-label="退出工作台" title="退出工作台">${icons.back}</button><i class="wb3-brand-elephant" title="飞象" aria-label="飞象">${icons.elephant}</i></span><label class="wb3-workspace-subject"><select class="wb3-subject-switch" aria-label="当前学段和学科">${Object.keys(curriculumCatalog).map((key) => `<option ${curriculumKey === key ? 'selected' : ''}>${key}</option>`).join('')}</select></label><button type="button" class="${active === 'library' || active === 'chapter' ? 'active' : ''}" data-workspace-tab="library">飞象题库</button><button type="button" class="${active === 'personal' ? 'active' : ''}" data-workspace-tab="personal">我的题库</button><button type="button" class="${active === 'add-more' ? 'active' : ''}" data-workspace-tab="add-more">组题工具</button>${openWorkspaceTabs.map((id) => { const tab = workspaceTabInfo(id); return tab ? `<span class="wb3-workspace-dynamic ${active === id ? 'active' : ''}"><button type="button" data-workspace-tab="${id}" title="${escapeHtml(tab.label)}">${escapeHtml(tab.label)}</button><button type="button" data-close-workspace-tab="${id}" aria-label="关闭${escapeHtml(tab.label)}">×</button></span>` : '' }).join('')}</nav>`
+    const aiComposeViews = ['ai-entry', 'add-more', 'ai-compose', 'ai-compose-record']
+    const active = aiComposeViews.includes(importWorkspaceView) ? 'ai-create' : questionSource === 'personal' ? 'personal' : 'library'
+    return `<nav class="wb3-workspace-tabs" aria-label="题库与组题导航"><span class="wb3-workspace-brand"><button type="button" data-action="exit" aria-label="退出工作台" title="退出工作台">${icons.back}</button><i class="wb3-brand-elephant" title="飞象" aria-label="飞象">${icons.elephant}</i></span><button type="button" class="${active === 'library' ? 'active' : ''}" data-workspace-tab="library">飞象题库</button><button type="button" class="${active === 'personal' ? 'active' : ''}" data-workspace-tab="personal">我的题库</button><button type="button" class="${active === 'ai-create' ? 'active' : ''}" data-workspace-tab="ai-create">AI组题</button></nav>`
   }
 
   function openWorkspaceTab(id) {
+    aiRecordingDrawerOpen = false
+    if (id === 'ai-create') {
+      adaptRequest = null
+      adaptPicker = null
+      importWorkspaceView = 'ai-entry'
+      render()
+      window.requestAnimationFrame(() => $('#wb3AiCreateInput', root)?.focus())
+      return
+    }
     if (id === 'knowledge') {
       openPersonalPapersLibrary()
       render()
@@ -1563,7 +1731,6 @@
     }
     const tab = workspaceTabInfo(id)
     if (!tab) return
-    if (!openWorkspaceTabs.includes(id)) openWorkspaceTabs.push(id)
     importWorkspaceView = tab.view
     activeImportRecordId = id.startsWith('record:') ? id.slice(7) : ''
     previewKnowledgePaperId = id.startsWith('paper:') ? id.slice(6) : ''
@@ -1574,18 +1741,18 @@
   function composePlanMarkup(record) {
     const plan = record.plan || { count: record.questions?.length || 5, types: '选择、填空、解答', difficulty: '基础与中等搭配', knowledge: '结合当前学段学科', minutes: 15 }
     const steps = record.status === 'completed'
-      ? [['命题参数定义与模型构建', `识别组题场景，规划 ${plan.count} 道题、${plan.minutes} 分钟的试卷结构`, true], ['题库检索与初筛', `围绕“${plan.knowledge}”检索并去除重复、超纲题目`, true], ['命题双向细目表', `按 ${plan.types} 配置题型，并建立题目与知识点的对应关系`, true], ['试题多维校验', '逐题检查题干、选项、答案、知识点和能力层级', true], ['试题结构平衡性复核', `复核难度分布：${plan.difficulty}`, true], ['AI 试题模拟与质量验收', '完成整卷模拟作答、分值与结构一致性检查', true], ['标准化文档输出', '生成试卷、答案解析和命题说明书', true]]
-      : [['命题参数定义与模型构建', `正在识别组题场景并规划 ${plan.count} 道题`, true], ['题库检索与初筛', `正在围绕“${plan.knowledge}”检索候选题`, true], ['命题双向细目表', '等待建立题目、知识点与能力层级对应关系', false], ['试题多维校验', '等待检查题干、选项和答案', false], ['试题结构平衡性复核', '等待复核题型与难度结构', false], ['AI 试题模拟与质量验收', '等待整卷模拟验收', false], ['标准化文档输出', '等待生成标准文档', false]]
-    return `<section class="wb3-compose-thinking"><header><div><b>专业组题过程</b><span>${record.status === 'completed' ? '已完成质量检查' : 'AI 正在执行组题方案'}</span></div><em>${record.mode === 'append' ? '补充题目' : record.mode === 'adapt' ? '改编单题' : '生成新题单'}</em></header><div class="wb3-compose-steps">${steps.map(([label, description, done], index) => `<article class="${done ? 'done' : index === 2 && record.status !== 'completed' ? 'current' : ''}"><i>${done ? '✓' : index + 1}</i><div><b>${label}</b><p>${escapeHtml(description)}</p></div></article>`).join('')}</div><details ${record.status === 'completed' ? '' : 'open'}><summary>查看组题蓝图</summary><div class="wb3-compose-plan"><span><b>${plan.count}</b>题目数量</span><span><b>${escapeHtml(plan.types)}</b>题型结构</span><span><b>${escapeHtml(plan.difficulty)}</b>难度分布</span><span><b>${escapeHtml(plan.knowledge)}</b>知识点覆盖</span><span><b>${plan.minutes} 分钟</b>建议用时</span></div></details></section>`
+      ? [['组题条件理解', `识别组题场景，规划 ${plan.count} 道题、${plan.minutes} 分钟的题单结构`, true], ['题库检索与初筛', `围绕“${plan.knowledge}”检索并去除重复、超纲题目`, true], ['双向细目表', `按 ${plan.types} 配置题型，并建立题目与知识点的对应关系`, true], ['试题多维校验', '逐题检查题干、选项、答案、知识点和能力层级', true], ['题单结构平衡性复核', `复核难度分布：${plan.difficulty}`, true], ['整卷模拟与质量验收', '完成整卷模拟作答、分值与结构一致性检查', true], ['标准化文档输出', '生成题单、答案解析和组题说明', true]]
+      : [['组题条件理解', `正在识别组题场景并规划 ${plan.count} 道题`, true], ['题库检索与初筛', `正在围绕“${plan.knowledge}”检索候选题`, true], ['双向细目表', '等待建立题目、知识点与能力层级对应关系', false], ['试题多维校验', '等待检查题干、选项和答案', false], ['题单结构平衡性复核', '等待复核题型与难度结构', false], ['整卷模拟与质量验收', '等待整卷模拟验收', false], ['标准化文档输出', '等待生成标准文档', false]]
+    return `<section class="wb3-compose-thinking"><header><div><b>专业组题过程</b><span>${record.status === 'completed' ? '已完成质量检查' : 'AI 正在执行组题方案'}</span></div><em>${record.mode === 'append' ? '补充题目' : record.mode === 'adapt' ? '改编单题' : '新建题单'}</em></header><div class="wb3-compose-steps">${steps.map(([label, description, done], index) => `<article class="${done ? 'done' : index === 2 && record.status !== 'completed' ? 'current' : ''}"><i>${done ? '✓' : index + 1}</i><div><b>${label}</b><p>${escapeHtml(description)}</p></div></article>`).join('')}</div><details ${record.status === 'completed' ? '' : 'open'}><summary>查看组题蓝图</summary><div class="wb3-compose-plan"><span><b>${plan.count}</b>题目数量</span><span><b>${escapeHtml(plan.types)}</b>题型结构</span><span><b>${escapeHtml(plan.difficulty)}</b>难度分布</span><span><b>${escapeHtml(plan.knowledge)}</b>知识点覆盖</span><span><b>${plan.minutes} 分钟</b>建议用时</span></div></details></section>`
   }
 
   function aiOutputMarkup(record) {
     if (record.status !== 'completed' || record.mode !== 'generate') return ''
-    return `<section class="wb3-ai-outputs"><header><div><b>AI 输出</b><span>命题说明书已生成</span></div></header><div class="wb3-ai-output-files"><details class="wb3-brief-file"><summary><span class="pdf">PDF</span><div><b>命题说明书.pdf</b><small>包含双向细目表、选题依据、难度结构与质量校验</small></div><span class="wb3-brief-actions"><em>查看</em><button type="button" data-download-brief>下载</button></span></summary><div class="wb3-brief-preview"><header><b>命题说明书</b><button type="button" data-download-brief>下载 PDF</button></header><section><h4>命题参数与结构</h4><p>题目数量：${record.plan?.count || record.questions.length} 题　题型：${escapeHtml(record.plan?.types || '选择、填空、解答')}　建议用时：${record.plan?.minutes || 15} 分钟</p></section><section><h4>双向细目表</h4>${record.questions.slice(0, 5).map((question, index) => `<p>${index + 1}. ${escapeHtml(question.type)}　${escapeHtml(question.knowledge)}　${escapeHtml(question.difficulty)}</p>`).join('')}</section><section><h4>质量校验结论</h4><p>题型、知识点与难度结构符合命题要求；已完成重复题、答案完整性和整卷结构检查。</p></section></div></details></div></section>`
+    return `<section class="wb3-ai-outputs"><header><div><b>AI 输出</b><span>组题说明已生成</span></div></header><div class="wb3-ai-output-files"><details class="wb3-brief-file"><summary><span class="pdf">PDF</span><div><b>组题说明.pdf</b><small>包含双向细目表、选题依据、难度结构与质量校验</small></div><span class="wb3-brief-actions"><em>查看</em><button type="button" data-download-brief>下载</button></span></summary><div class="wb3-brief-preview"><header><b>组题说明</b><button type="button" data-download-brief>下载 PDF</button></header><section><h4>组题参数与结构</h4><p>题目数量：${record.plan?.count || record.questions.length} 题　题型：${escapeHtml(record.plan?.types || '选择、填空、解答')}　建议用时：${record.plan?.minutes || 15} 分钟</p></section><section><h4>双向细目表</h4>${record.questions.slice(0, 5).map((question, index) => `<p>${index + 1}. ${escapeHtml(question.type)}　${escapeHtml(question.knowledge)}　${escapeHtml(question.difficulty)}</p>`).join('')}</section><section><h4>质量校验结论</h4><p>题型、知识点与难度结构符合组题要求；已完成重复题、答案完整性和整卷结构检查。</p></section></div></details></div></section>`
   }
 
   function aiGeneratedQuestionsMarkup(record, addedMap) {
-    return `<details class="wb3-ai-generated" open><summary><span>${icons.sparkle}<b>AI 生成题目</b><em>${record.questions.length} 道</em></span><small>点击折叠 / 展开</small></summary><div class="wb3-ai-generated-toolbar"><span>可以逐题选用，也可以一次全部加入当前题单</span><button type="button" data-compose-record-all="${record.id}">${record.allAdded ? '已全部加入' : '全部加入当前题单'}</button></div><div class="wb3-import-question-list">${record.questions.map((question) => questionCardMarkup(question, addedMap)).join('')}</div></details>`
+    return `<details class="wb3-ai-generated" open><summary><span>${icons.sparkle}<b>AI 匹配题目</b><em>${record.questions.length} 道</em></span><small>点击折叠 / 展开</small></summary><div class="wb3-ai-generated-toolbar"><span>可以逐题选用，也可以一次全部加入当前题单</span><button type="button" data-compose-record-all="${record.id}">${record.allAdded ? '已全部加入' : '全部加入当前题单'}</button></div><div class="wb3-import-question-list">${record.questions.map((question) => questionCardMarkup(question, addedMap)).join('')}</div></details>`
   }
 
   function composeConversationHistoryMarkup(record, addedMap) {
@@ -1606,7 +1773,7 @@
       turns = [...parents, record]
     }
     const history = turns.filter((item) => item.id !== record.id)
-    return `${history.map((item, index) => `<section class="wb3-chat-turn history"><div class="wb3-chat-user"><span>我</span><p>${escapeHtml(item.prompt)}</p></div><div class="wb3-chat-ai"><span>${icons.sparkle}</span><div><b>第 ${index + 1} 轮 · AI 已完成组题</b><p>生成 ${item.questions.length} 道题目，本轮记录已保留。</p><details><summary>展开本轮 ${item.questions.length} 道题</summary><div class="wb3-ai-generated-toolbar"><span>展开后仍可逐题选用</span><button type="button" data-compose-record-all="${item.id}">${item.allAdded ? '已全部加入' : '全部加入当前题单'}</button></div><div class="wb3-import-question-list">${item.questions.map((question) => questionCardMarkup(question, addedMap)).join('')}</div></details></div></div></section>`).join('')}<section class="wb3-chat-turn current"><div class="wb3-chat-user"><span>我</span><p>${escapeHtml(record.prompt)}</p></div><div class="wb3-chat-ai"><span>${icons.sparkle}</span><div><b>第 ${history.length + 1} 轮 · ${record.status === 'completed' ? 'AI 已完成组题' : 'AI 正在组题'}</b><p>${record.status === 'completed' ? `已生成 ${record.questions.length} 道题，可在下方查看和选用。` : '正在理解要求并执行专业组题流程…'}</p></div></div></section>`
+    return `${history.map((item, index) => `<section class="wb3-chat-turn history"><div class="wb3-chat-user"><span>我</span><p>${escapeHtml(item.prompt)}</p></div><div class="wb3-chat-ai"><span>${icons.sparkle}</span><div><b>第 ${index + 1} 轮 · AI 已完成组题</b><p>从题库匹配 ${item.questions.length} 道题，本轮记录已保留。</p><details><summary>展开本轮 ${item.questions.length} 道题</summary><div class="wb3-ai-generated-toolbar"><span>展开后仍可逐题选用</span><button type="button" data-compose-record-all="${item.id}">${item.allAdded ? '已全部加入' : '全部加入当前题单'}</button></div><div class="wb3-import-question-list">${item.questions.map((question) => questionCardMarkup(question, addedMap)).join('')}</div></details></div></div></section>`).join('')}<section class="wb3-chat-turn current"><div class="wb3-chat-user"><span>我</span><p>${escapeHtml(record.prompt)}</p></div><div class="wb3-chat-ai"><span>${icons.sparkle}</span><div><b>第 ${history.length + 1} 轮 · ${record.status === 'completed' ? 'AI 已完成组题' : 'AI 正在组题'}</b><p>${record.status === 'completed' ? `已匹配 ${record.questions.length} 道题，可在下方查看和选用。` : '正在理解要求并检索飞象题库与我的题库…'}</p></div></div></section>`
   }
 
   function appendAssistMarkup(record) {
@@ -1615,20 +1782,73 @@
     return `<section class="wb3-append-assist"><span>${icons.sparkle}</span><div><b>已为当前题单准备好 ${record.questions.length} 道补充题</b><p>这些题目补充了当前题单的知识点与难度梯度，并尽量避开已有题目。你可以全部加入，也可以在下方逐题选用。</p><div class="wb3-append-confirm"><strong>是否将这 ${record.questions.length} 道题直接加入当前题单？</strong><button type="button" data-compose-record-all="${record.id}">全部加入当前题单</button></div></div></section>`
   }
 
-  function importRecordActionMarkup(record) {
-    if (record.status === 'completed') return `<button type="button" data-open-record="${record.id}">查看并选题</button>`
+  function importRecordActionMarkup(record, inDrawer = false) {
+    if (record.status === 'completed') return `<button type="button" ${inDrawer ? 'data-view-imported-record' : 'data-open-record'}="${record.id}">${record.unread ? '查看新题' : inDrawer ? '查看本次题目' : '查看题目'}</button>`
     if (record.status === 'failed') return `<button type="button" data-reparse-record="${record.id}">重新解析</button>`
     return ''
   }
 
-  function importRecordRowMarkup(record) {
-    return `<article class="wb3-record-row ${record.status}"><span class="wb3-record-file">${icons.blank}</span><div><span class="wb3-record-status">${record.status === 'completed' ? '解析完成' : record.status === 'failed' ? '解析失败' : '解析中'}</span><b>${escapeHtml(record.filename)}</b><small>提交于 ${escapeHtml(record.submittedAt)}${record.completedAt ? ` · 完成于 ${escapeHtml(record.completedAt)}` : ''}${record.questions?.length ? ` · ${record.questions.length} 题` : ''}</small><em>${escapeHtml(record.stage)}${record.eta ? ` · ${escapeHtml(record.eta)}` : ''}</em></div>${importRecordActionMarkup(record)}</article>`
+  function importRecordRowMarkup(record, inDrawer = false) {
+    return `<article class="wb3-record-row ${record.status} ${record.unread ? 'unread' : ''}"><span class="wb3-record-file">${record.status === 'completed' ? icons.check : icons.blank}</span><div><span class="wb3-record-status">${record.status === 'completed' ? '录题完成' : record.status === 'failed' ? '录题失败' : '正在AI录题'}</span><b title="${escapeHtml(record.filename)}">${escapeHtml(record.filename)}</b><small>提交于 ${escapeHtml(record.submittedAt)}${record.completedAt ? ` · 完成于 ${escapeHtml(record.completedAt)}` : ''}${record.questions?.length ? ` · 已录入 ${record.questions.length} 题` : ''}</small><em>${escapeHtml(record.stage)}${record.eta ? ` · ${escapeHtml(record.eta)}` : ''}</em></div>${importRecordActionMarkup(record, inDrawer)}</article>`
   }
 
-  function importRecordListMarkup() {
+  function importRecordListMarkup(inDrawer = false) {
     return aiImportRecords.length
-      ? aiImportRecords.map((record) => importRecordRowMarkup(record)).join('')
+      ? aiImportRecords.map((record) => importRecordRowMarkup(record, inDrawer)).join('')
       : '<p class="wb3-record-empty">暂无记录</p>'
+  }
+
+  function aiRecordingDrawerMarkup() {
+    if (!aiRecordingDrawerOpen || importWorkspaceView !== 'library' || questionSource !== 'personal') return ''
+    const processingCount = aiImportRecords.filter((record) => record.status === 'processing').length
+    return `<div class="wb3-ai-recording-layer">
+      <button type="button" class="wb3-ai-recording-mask" data-close-ai-recording aria-label="关闭上传文件"></button>
+      <aside class="wb3-ai-recording-drawer" role="dialog" aria-modal="false" aria-labelledby="wb3AiRecordingTitle">
+        <header><div><span>${icons.upload}</span><div><h2 id="wb3AiRecordingTitle">上传文件</h2><p>AI 自动识别题目、答案和标签，完成后进入我的题库</p></div></div><button type="button" data-close-ai-recording aria-label="关闭上传文件" title="关闭">×</button></header>
+        <div class="wb3-ai-recording-body">
+          <button type="button" class="wb3-ai-dropzone wb3-ai-recording-dropzone" data-start-upload>${icons.upload}<b>点击选择或拖入文件</b><span>支持 PNG、JPG、PDF、DOC、DOCX，单个文件不超过 20 MB</span></button>
+          <section class="wb3-ai-recording-tasks"><header><div><b>录题任务</b><span>${processingCount ? `${processingCount} 个处理中，可关闭抽屉继续其他操作` : '完成后直接进入我的题库'}</span></div></header><div class="wb3-ai-recording-task-list wb3-record-list">${importRecordListMarkup(true)}</div></section>
+        </div>
+      </aside>
+    </div>`
+  }
+
+  function importCompletionNoticeMarkup() {
+    if (aiRecordingDrawerOpen || personalImportRecordViewId || questionSource !== 'personal' || personalLibraryMode !== 'questions') return ''
+    const unreadRecords = aiImportRecords.filter((record) => record.status === 'completed' && record.unread)
+    if (!unreadRecords.length) return ''
+    const questionCount = unreadRecords.reduce((sum, record) => sum + (record.questions?.length || 0), 0)
+    return `<div class="wb3-ai-recording-notice">${icons.check}<div><b>AI录题完成，新增 ${questionCount} 道题</b><span>已自动添加阶段科目、题型、难度和知识点标签</span></div><button type="button" data-view-imported-questions>查看新题</button><button type="button" class="close" data-dismiss-import-notice aria-label="关闭提示">×</button></div>`
+  }
+
+  function viewImportedQuestions(recordId = '') {
+    const records = recordId
+      ? aiImportRecords.filter((record) => record.id === recordId && record.status === 'completed')
+      : aiImportRecords.filter((record) => record.status === 'completed' && record.unread)
+    const personalQuestionIds = new Set(personalQuestions.map((question) => question.id))
+    const questionIds = records.flatMap((record) => record.questions || []).map((question) => question.id).filter((id) => personalQuestionIds.has(id))
+    if (!questionIds.length) {
+      records.forEach((record) => { record.unread = false })
+      showToast('本次录入的题目已被删除')
+      renderPreservingResultScroll()
+      return
+    }
+    records.forEach((record) => { record.unread = false })
+    personalImportReturnScrollTop = root?.querySelector('.wb3-result-scroll')?.scrollTop || 0
+    aiRecordingDrawerOpen = false
+    personalImportRecordViewId = records.length === 1 ? records[0].id : ''
+    importWorkspaceView = 'library'
+    questionSource = 'personal'
+    personalLibraryMode = 'questions'
+    selectedPersonalQuestionIds = new Set()
+    personalBatchMode = false
+    render()
+    window.requestAnimationFrame(() => {
+      const cards = questionIds.map((id) => root?.querySelector(`.wb3-qcard[data-qid="${id}"]`)).filter(Boolean)
+      cards[0]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      cards.forEach((card) => card.classList.add('wb3-question-just-added'))
+      window.setTimeout(() => cards.forEach((card) => card.classList.remove('wb3-question-just-added')), 1400)
+    })
   }
 
   function aiComposeHistoryForEntry() {
@@ -1649,7 +1869,7 @@
   }
 
   function aiCreateInputBlockMarkup() {
-    return `<div class="wb3-ai-create-input"><div class="wb3-ai-create-attachments" ${aiCreateAttachments.length ? '' : 'hidden'}>${aiCreateAttachmentsMarkup()}</div><textarea id="wb3AiCreateInput" rows="4" placeholder="描述题量、知识点和难度；可添加文件或语音输入">${escapeHtml(aiCreateInputDraft)}</textarea><div class="wb3-ai-create-toolbar"><button type="button" class="wb3-ai-create-add" data-ai-create-add-file aria-label="添加文件" title="添加文件">＋</button><button type="button" class="wb3-ai-create-voice ${aiCreateListening ? 'listening' : ''}" data-ai-create-voice aria-label="语音输入" title="语音输入"><span aria-hidden="true">♩</span></button><button type="button" class="wb3-ai-create-send" data-ai-create-send>${icons.sparkle}开始组题</button></div></div>`
+    return `<div class="wb3-ai-create-input"><textarea id="wb3AiCreateInput" rows="4" placeholder="描述学段学科、题量、知识点和难度">${escapeHtml(aiCreateInputDraft)}</textarea><div class="wb3-ai-create-toolbar"><button type="button" class="wb3-ai-create-voice ${aiCreateListening ? 'listening' : ''}" data-ai-create-voice aria-label="语音输入" title="语音输入"><span aria-hidden="true">♩</span></button><span class="wb3-ai-source-note">题源：飞象题库＋我的题库</span><button type="button" class="wb3-ai-create-send" data-ai-create-send>${icons.sparkle}开始组题</button></div></div>`
   }
 
   function captureAiCreateInputDraft() {
@@ -1672,8 +1892,8 @@
     }
     if (!SpeechRecognition) {
       aiCreateInputDraft = aiCreateInputDraft.trim()
-        ? `${aiCreateInputDraft.trim()} 帮我生成一份五年级小数乘法练习，共 10 题`
-        : '帮我生成一份五年级小数乘法练习，共 10 题'
+        ? `${aiCreateInputDraft.trim()} 从题库组一份五年级小数乘法练习，共 10 题`
+        : '从题库组一份五年级小数乘法练习，共 10 题'
       showToast('浏览器不支持语音识别，已填入演示文案')
       render()
       return
@@ -1724,16 +1944,26 @@
   function completeImportRecord(recordId) {
     const record = aiImportRecords.find((item) => item.id === recordId)
     if (!record || record.status !== 'processing') return
-    record.questions = bankQuestions.slice(0, 5).map((question, index) => ({ ...question, id: `${recordId}-q${index + 1}`, originId: question.id, source: 'ai-record' }))
+    record.questions = bankQuestions.slice(0, 5).map((question, index) => ({
+      ...question,
+      id: `${recordId}-q${index + 1}`,
+      originId: question.id,
+      source: 'ai-record',
+      curriculumTags: [question.curriculum],
+      typeTags: [question.type],
+      difficultyTags: [question.difficulty],
+      knowledgeTags: [question.knowledge],
+      customTags: [],
+    }))
     record.status = 'completed'
     record.stage = '解析完成'
     record.completedAt = '刚刚'
+    record.unread = true
     delete record.eta
-    record.questions.forEach((question) => {
-      if (!personalQuestions.some((item) => item.id === question.id)) personalQuestions.unshift(question)
-    })
-    if (root && !root.hidden) render()
-    showToast('AI录题完成，已保存到“我的题库”')
+    const newQuestions = record.questions.filter((question) => !personalQuestions.some((item) => item.id === question.id))
+    personalQuestions = [...newQuestions, ...personalQuestions]
+    if (root && !root.hidden) renderPreservingResultScroll()
+    showToast(`AI录题完成，新增 ${record.questions.length} 道题`)
   }
 
   function restartImportRecord(recordId) {
@@ -1744,9 +1974,45 @@
     record.eta = '预计还需 4–10 分钟'
     record.questions = []
     delete record.completedAt
-    render()
+    renderPreservingResultScroll()
     showToast('已开始重新解析')
-    window.setTimeout(() => completeImportRecord(recordId), 6500)
+    scheduleImportRecordProgress(recordId)
+  }
+
+  function importWorkspaceContextMarkup(activeRecord, activeComposeRecord, previewPaper) {
+    let parentLabel = questionSource === 'personal' ? '我的题库' : '飞象题库'
+    let sectionLabel = ''
+    let detailLabel = ''
+    let backLabel = `返回${parentLabel}`
+    let backAttribute = 'data-return-library'
+
+    if (['ai-upload', 'ai-history', 'ai-record'].includes(importWorkspaceView)) {
+      parentLabel = '我的题库'
+      sectionLabel = '上传文件'
+      if (importWorkspaceView === 'ai-history') detailLabel = '录题记录'
+      if (importWorkspaceView === 'ai-record') detailLabel = activeRecord?.filename || '录题详情'
+      if (importWorkspaceView !== 'ai-upload') {
+        backLabel = '返回上传文件'
+        backAttribute = 'data-import-view="ai-upload"'
+      } else {
+        backLabel = '返回我的题库'
+      }
+    } else if (['ai-entry', 'add-more'].includes(importWorkspaceView)) {
+      return ''
+    } else if (['ai-compose', 'ai-compose-record'].includes(importWorkspaceView)) {
+      parentLabel = 'AI组题'
+      sectionLabel = importWorkspaceView === 'ai-compose' ? '组题记录' : activeComposeRecord?.title || '组题详情'
+      backLabel = '返回AI组题'
+      backAttribute = 'data-import-view="ai-entry"'
+    } else if (importWorkspaceView === 'knowledge') {
+      parentLabel = '我的题库'
+      sectionLabel = '题单'
+      detailLabel = previewPaper?.title || ''
+      backLabel = '返回我的题库'
+    }
+
+    if (!sectionLabel) return ''
+    return `<div class="wb3-import-center-head"><button type="button" ${backAttribute}>${icons.back}${escapeHtml(backLabel)}</button><div class="wb3-import-breadcrumb" aria-label="当前位置"><span>${escapeHtml(parentLabel)}</span><i>/</i><b>${escapeHtml(sectionLabel)}</b>${detailLabel ? `<i>/</i><em title="${escapeHtml(detailLabel)}">${escapeHtml(detailLabel)}</em>` : ''}</div></div>`
   }
 
   function importWorkspaceMarkup() {
@@ -1757,38 +2023,38 @@
     let content = ''
 
     if (importWorkspaceView === 'ai-entry') {
-      content = `<div class="wb3-ai-create-page"><div class="wb3-import-page-title"><div><h2>AI组题</h2><p>描述需要的题量、知识点和难度，生成结果将进入当前题单；支持添加文件与语音输入。</p></div></div><div class="wb3-ai-create-prompts"><button type="button" data-ai-create-suggestion="生成 10 道基础练习题">10 道基础题</button><button type="button" data-ai-create-suggestion="生成一份难度递进的综合练习">难度递进</button><button type="button" data-ai-create-suggestion="补 3 道中等题，避免与现有题目重复">补充中等题</button></div>${aiCreateInputBlockMarkup()}${aiComposeHistoryListMarkup()}</div>`
+      content = `<div class="wb3-ai-create-page"><div class="wb3-import-page-title"><div><h2>AI组题</h2><p>描述题量、知识点和难度，AI 会从飞象题库和我的题库中检索匹配，结果将进入当前题单。</p></div></div><div class="wb3-ai-create-prompts"><button type="button" data-ai-create-suggestion="从题库匹配 10 道基础练习题">10 道基础题</button><button type="button" data-ai-create-suggestion="从题库组一份难度递进的综合练习">难度递进</button><button type="button" data-ai-create-suggestion="从题库补 3 道中等题，避免与现有题目重复">补充中等题</button></div>${aiCreateInputBlockMarkup()}${aiComposeHistoryListMarkup()}</div>`
     } else if (importWorkspaceView === 'add-more') {
-      content = `<div class="wb3-add-more-page"><div class="wb3-import-page-title"><div><h2>组题工具</h2></div></div><div class="wb3-add-source-list"><button type="button" data-open-source="upload"><span>${icons.upload}</span><div><b>上传文件</b><small>上传题目和答案文件，AI 识别并打标，自动存入我的题库</small></div><em>上传文件</em></button><button type="button" data-start-ai-entry><span>${icons.sparkle}</span><div><b>AI组题</b><small>说出组卷要求，AI 按照「专家命题 6 步法」，几分钟生成高质量试卷</small></div><em>开始组题</em></button></div><p class="wb3-more-tools-coming"><span></span>更多组题工具即将上线，敬请期待<span></span></p></div>`
+      content = `<div class="wb3-ai-create-page"><div class="wb3-import-page-title"><div><h2>AI组题</h2><p>描述题量、知识点和难度，AI 会从飞象题库和我的题库中检索匹配。</p></div></div>${aiCreateInputBlockMarkup()}${aiComposeHistoryListMarkup()}</div>`
     } else if (importWorkspaceView === 'ai-upload') {
-      content = `<div class="wb3-upload-page"><button type="button" class="wb3-ai-dropzone" data-start-upload>${icons.upload}<b>从电脑选择文件，或把文件拖到这里</b><span>把本地试卷、图片或 Word 上传后，AI 会自动录题。支持 PNG、JPG、PDF、DOCX，单个文件不超过 20 MB</span></button><section class="wb3-upload-history"><div class="wb3-import-page-title"><div><h2>AI录题进度</h2><p>上传任务会在后台解析，完成后可查看并选用题目；解析中无需操作，失败可重新解析。</p></div></div><div class="wb3-record-list">${importRecordListMarkup()}</div></section></div>`
+      content = `<div class="wb3-upload-page"><button type="button" class="wb3-ai-dropzone" data-start-upload>${icons.upload}<b>从电脑选择文件，或把文件拖到这里</b><span>把本地试卷、图片或 Word 上传后，AI 会自动录题。支持 PNG、JPG、PDF、DOCX，单个文件不超过 20 MB</span></button><section class="wb3-upload-history"><div class="wb3-import-page-title"><div><h2>AI录题进度</h2><p>解析完成后，题目会自动进入“我的题库”；解析中无需操作，失败可重新解析。</p></div></div><div class="wb3-record-list">${importRecordListMarkup()}</div></section></div>`
     } else if (importWorkspaceView === 'ai-history') {
       content = `<div class="wb3-record-page"><div class="wb3-import-page-title"><div><h2>AI录题记录</h2><p>解析中任务可以离开页面，已完成结果可随时重新选题。</p></div></div>
         <div class="wb3-record-list">${importRecordListMarkup()}</div></div>`
     } else if (importWorkspaceView === 'ai-record' && activeRecord) {
-      content = `<div class="wb3-record-detail"><div class="wb3-import-page-title"><div><h2>${escapeHtml(activeRecord.filename)}</h2><p>${activeRecord.status === 'completed' ? `${activeRecord.questions.length} 道题 · 已保存到“我的题库”` : `${escapeHtml(activeRecord.stage)} · ${escapeHtml(activeRecord.eta || '')}`}</p></div>${activeRecord.status === 'completed' ? `<button type="button" class="primary" data-import-record-all="${activeRecord.id}">全部选用</button>` : ''}</div>
-        ${activeRecord.status === 'completed' ? `<div class="wb3-library-sync-note compact">${icons.check}<span><b>已保存到“我的题库”</b><small>下方卡片与普通题库一致，可逐题显示答案、AI改编或选用。</small></span></div><div class="wb3-import-question-list">${activeRecord.questions.map((question) => questionCardMarkup(question, addedMap)).join('')}</div>` : `<div class="wb3-processing-card"><i></i><b>${escapeHtml(activeRecord.stage)}</b><p>${escapeHtml(activeRecord.eta || '预计需要 4–10 分钟')}。可以返回飞象题库继续组题。</p><span>上传完成　→　识别题目　→　提取答案　→　自动打标　→　关联我的题库</span></div>`}
+      content = `<div class="wb3-record-detail"><div class="wb3-import-page-title"><div><h2>${escapeHtml(activeRecord.filename)}</h2><p>${activeRecord.status === 'completed' ? `${activeRecord.questions.length} 道题 · 已进入“我的题库”` : `${escapeHtml(activeRecord.stage)} · ${escapeHtml(activeRecord.eta || '')}`}</p></div>${activeRecord.status === 'completed' ? `<button type="button" class="primary" data-import-record-all="${activeRecord.id}">全部选用</button>` : ''}</div>
+        ${activeRecord.status === 'completed' ? `<div class="wb3-library-sync-note compact">${icons.check}<span><b>已进入“我的题库”</b><small>下方卡片与普通题库一致，可逐题显示答案、AI改编或选用。</small></span></div><div class="wb3-import-question-list">${activeRecord.questions.map((question) => questionCardMarkup(question, addedMap)).join('')}</div>` : `<div class="wb3-processing-card"><i></i><b>${escapeHtml(activeRecord.stage)}</b><p>${escapeHtml(activeRecord.eta || '预计需要 4–10 分钟')}。可以返回飞象题库继续组题。</p><span>上传完成　→　识别题目　→　提取答案　→　自动打标　→　存入我的题库</span></div>`}
       </div>`
     } else if (importWorkspaceView === 'ai-compose-record' && activeComposeRecord) {
       const isAdaptRecord = activeComposeRecord.mode === 'adapt'
       const isAppendRecord = activeComposeRecord.mode === 'append' && activeComposeRecord.needsCanvasConfirmation
-      content = `<div class="wb3-record-detail"><div class="wb3-import-page-title"><div><h2>${escapeHtml(activeComposeRecord.title)}</h2><p>${activeComposeRecord.status === 'completed' ? `${activeComposeRecord.questions.length} 道候选题 · ${escapeHtml(activeComposeRecord.prompt)}` : 'AI 正在根据要求生成题目'}</p></div></div>
+      content = `<div class="wb3-record-detail"><div class="wb3-import-page-title"><div><h2>${escapeHtml(activeComposeRecord.title)}</h2><p>${activeComposeRecord.status === 'completed' ? `${activeComposeRecord.questions.length} 道候选题 · ${escapeHtml(activeComposeRecord.prompt)}` : 'AI 正在根据要求检索题库'}</p></div></div>
         ${composeConversationHistoryMarkup(activeComposeRecord, addedMap)}
         ${isAppendRecord ? appendAssistMarkup(activeComposeRecord) : composePlanMarkup(activeComposeRecord)}
         ${aiOutputMarkup(activeComposeRecord)}
-        ${activeComposeRecord.status === 'completed' ? `${isAdaptRecord && activeComposeRecord.original ? `<div class="wb3-adapt-original"><b>原题</b><p>${escapeHtml(activeComposeRecord.original.text)}</p></div><div class="wb3-import-question-list">${activeComposeRecord.questions.map((question) => `${questionCardMarkup(question, addedMap)}<div class="wb3-adapt-result-actions"><button type="button" data-adapt-result-replace="${question.id}" data-compose-id="${activeComposeRecord.id}">替换原题</button><button type="button" class="primary" data-quick-add="${question.id}">另加为新题</button></div>`).join('')}</div>` : isAppendRecord ? (activeComposeRecord.autoAdded ? '' : `<div class="wb3-import-question-list">${activeComposeRecord.questions.map((question) => questionCardMarkup(question, addedMap)).join('')}</div>`) : aiGeneratedQuestionsMarkup(activeComposeRecord, addedMap)}` : isAppendRecord ? '' : `<div class="wb3-processing-card"><i></i><b>${isAdaptRecord ? '正在生成改编方案' : '正在生成新题单'}</b><p>AI 正在分析题量、题型、难度和知识点，生成后可整份或逐题加入右侧。</p></div>`}
+        ${activeComposeRecord.status === 'completed' ? `${isAdaptRecord && activeComposeRecord.original ? `<div class="wb3-adapt-original"><b>原题</b><p>${escapeHtml(activeComposeRecord.original.text)}</p></div><div class="wb3-import-question-list">${activeComposeRecord.questions.map((question) => `${questionCardMarkup(question, addedMap)}<div class="wb3-adapt-result-actions"><button type="button" data-adapt-result-replace="${question.id}" data-compose-id="${activeComposeRecord.id}">替换原题</button><button type="button" class="primary" data-quick-add="${question.id}">另加为新题</button></div>`).join('')}</div>` : isAppendRecord ? (activeComposeRecord.autoAdded ? '' : `<div class="wb3-import-question-list">${activeComposeRecord.questions.map((question) => questionCardMarkup(question, addedMap)).join('')}</div>`) : aiGeneratedQuestionsMarkup(activeComposeRecord, addedMap)}` : isAppendRecord ? '' : `<div class="wb3-processing-card"><i></i><b>${isAdaptRecord ? '正在生成改编方案' : '正在检索匹配题目'}</b><p>AI 正在分析题量、题型、难度和知识点，并从题库筛选候选题。</p></div>`}
         ${activeComposeRecord.status === 'completed' && !isAdaptRecord ? `<div class="wb3-ai-continue"><div><b>${icons.sparkle}继续调整这份题单</b><span><button type="button" data-ai-followup-suggestion="再补 3 道中等题">补 3 道中等题</button><button type="button" data-ai-followup-suggestion="增加应用题，避免重复">增加应用题</button></span></div><div><textarea id="wb3AiFollowupInput" rows="1" placeholder="继续描述补题或调整要求"></textarea><button type="button" data-ai-followup-send aria-label="发送" title="发送">${icons.up}</button></div></div>` : ''}
       </div>`
     } else if (importWorkspaceView === 'ai-compose') {
-      content = `<div class="wb3-record-page"><div class="wb3-import-page-title"><div><h2>AI组题记录</h2><p>保留每次 AI 协作生成的题单，可再次整份或逐题选用。</p></div></div>
-        <div class="wb3-record-list">${aiComposeRecords.map((record) => `<article class="wb3-record-row ${record.status}"><span class="wb3-record-file">${icons.sparkle}</span><div><span class="wb3-record-status">${record.status === 'completed' ? '生成完成' : '生成中'}</span><b>${escapeHtml(record.title)}</b><small>${record.mode === 'append' ? '补充题目' : record.mode === 'adapt' ? '改编单题' : '生成新题单'} · ${escapeHtml(record.createdAt)} · ${record.questions.length} 题</small><em>${escapeHtml(record.prompt)}</em></div><button type="button" data-open-compose-record="${record.id}">${record.status === 'completed' ? '查看题目' : '查看进度'}</button></article>`).join('')}</div></div>`
+      content = `<div class="wb3-record-page"><div class="wb3-import-page-title"><div><h2>AI组题记录</h2><p>保留每次 AI 从题库匹配的题单，可再次整份或逐题选用。</p></div></div>
+        <div class="wb3-record-list">${aiComposeRecords.map((record) => `<article class="wb3-record-row ${record.status}"><span class="wb3-record-file">${icons.sparkle}</span><div><span class="wb3-record-status">${record.status === 'completed' ? '匹配完成' : '匹配中'}</span><b>${escapeHtml(record.title)}</b><small>${record.mode === 'append' ? '补充题目' : record.mode === 'adapt' ? '改编单题' : '新建题单'} · ${escapeHtml(record.createdAt)} · ${record.questions.length} 题</small><em>${escapeHtml(record.prompt)}</em></div><button type="button" data-open-compose-record="${record.id}">${record.status === 'completed' ? '查看题目' : '查看进度'}</button></article>`).join('')}</div></div>`
     } else if (importWorkspaceView === 'knowledge' && previewPaper) {
       content = knowledgePaperPreviewMarkup(previewPaper, addedMap)
     } else if (importWorkspaceView === 'knowledge') {
       content = knowledgePapersPageMarkup()
     }
 
-    return `<section class="wb3-library wb3-import-workspace">${workspaceTabsMarkup()}<div class="wb3-import-center-body">${content}</div></section>`
+    return `<section class="wb3-library wb3-import-workspace">${workspaceTabsMarkup()}${importWorkspaceContextMarkup(activeRecord, activeComposeRecord, previewPaper)}<div class="wb3-import-center-body">${content}</div></section>`
   }
 
   function leftPanelMarkup() {
@@ -1803,21 +2069,28 @@
       const previewPaper = previewKnowledgePaperId ? allKnowledgePapers().find((item) => item.id === previewKnowledgePaperId) : null
       const papersBody = previewPaper
         ? `<div class="wb3-results-head wb3-paper-results-head"><button type="button" data-back-knowledge>返回题单列表</button><div><b>${escapeHtml(previewPaper.title)}</b><small>${escapeHtml(previewPaper.meta)}</small></div><button type="button" class="primary" data-import-knowledge-all="${previewPaper.id}">全部选用</button></div><div class="wb3-result-scroll wb3-import-question-list">${previewPaper.questions.map((question) => questionCardMarkup(question, addedMap)).join('')}</div>`
-        : `<div class="wb3-paper-list-toolbar"><span>${paperQuery ? `找到 ${filteredPapers.length} 份题单` : `共 ${papers.length} 份题单`}</span><label class="wb3-paper-search">${icons.search}<input id="wb3PersonalPaperSearch" type="search" value="${escapeHtml(personalPaperSearchQuery)}" placeholder="搜索题单名称"></label></div><div class="wb3-result-scroll">${filteredPapers.length ? personalPapersListMarkup(filteredPapers) : '<div class="wb3-empty-results"><b>未找到相关题单</b><p>换个关键词试试。</p></div>'}</div>`
+        : !papers.length
+          ? `<div class="wb3-result-scroll">${personalPapersEmptyMarkup()}</div>`
+          : `<div class="wb3-paper-list-toolbar"><span>${paperQuery ? `找到 ${filteredPapers.length} 份题单` : `共 ${papers.length} 份题单`}</span><label class="wb3-paper-search">${icons.search}<input id="wb3PersonalPaperSearch" type="search" value="${escapeHtml(personalPaperSearchQuery)}" placeholder="搜索题单名称"></label></div><div class="wb3-result-scroll">${filteredPapers.length ? personalPapersListMarkup(filteredPapers) : '<div class="wb3-empty-results"><b>未找到相关题单</b><p>换个关键词试试。</p></div>'}</div>`
       return `<section class="wb3-library wb3-library-personal-papers">
         ${workspaceTabsMarkup()}
         ${personalLibrarySubtabsMarkup()}
-        <div class="wb3-personal-paper-stage wb3-results">${papersBody}</div>
+        <div class="wb3-personal-paper-stage wb3-results">${papersBody}${aiRecordingDrawerMarkup()}</div>
       </section>`
     }
     const tree = activeTree()
-    const questions = filterBankQuestions()
+    const importResultRecord = questionSource === 'personal' ? currentPersonalImportRecord() : null
+    const questions = importResultRecord ? currentBankQuestions() : filterBankQuestions()
     const totalPages = Math.min(OFFICIAL_MAX_PAGES, Math.max(1, Math.ceil(questions.length / OFFICIAL_PAGE_SIZE)))
     if (officialPage > totalPages) officialPage = totalPages
     const visibleQuestions = questionSource === 'official' ? questions.slice((officialPage - 1) * OFFICIAL_PAGE_SIZE, officialPage * OFFICIAL_PAGE_SIZE) : questions
     const treeGroups = visibleTreeGroups()
     const parentNames = Object.keys(tree.parents)
-    const difficultyOptions = [...new Set(currentBankQuestions().map((question) => question.difficulty))]
+    const typeOptions = [...new Set(currentBankQuestions().flatMap((question) => questionSource === 'personal' ? questionTypeTags(question) : [question.type]).filter(Boolean))]
+    const difficultyOptions = [...new Set(currentBankQuestions().flatMap((question) => questionSource === 'personal' ? questionDifficultyTags(question) : [question.difficulty]).filter(Boolean))]
+    const curriculumOptions = personalCurriculumOptions()
+    const knowledgeOptions = personalKnowledgeOptions()
+    const selectedPersonalTag = personalCollection.startsWith('tag:') ? personalCollection.slice(4) : ''
     const showOfficialUnlock = questionSource === 'official' && questions.length > OFFICIAL_PAGE_SIZE
     const remainingOfficialCount = Math.max(0, questions.length - OFFICIAL_PAGE_SIZE)
     const remainingOfficialPages = Math.max(0, totalPages - 1)
@@ -1827,42 +2100,58 @@
     const unlockPrompt = officialUnlockPromptOpen ? `<div class="wb3-overlay" data-official-unlock-overlay><div class="wb3-unlock-dialog" role="dialog"><span>${icons.sparkle}</span><h3>解锁更多题目</h3><p>本次将消耗 <b>20 积分</b>，解锁当前知识点后续 ${remainingOfficialPages} 页、共 ${remainingOfficialCount} 道题。</p><div><button type="button" data-official-unlock-cancel>暂不解锁</button><button type="button" class="primary" data-official-unlock-confirm>确认解锁</button></div></div></div>` : ''
     const treeScopedCount = questionsInTreeScope().length
     const isLibraryTab = questionSource === 'official'
+    const hasPersonalFilters = !isLibraryTab && (
+      personalCurriculumFilter !== 'all' ||
+      personalKnowledgeFilter !== 'all' ||
+      filterType !== '全部题型' ||
+      filterDifficulty !== '全部难度' ||
+      personalCollection !== 'all' ||
+      Boolean(treeSearchQuery.trim())
+    )
     const browseByChapter = isLibraryTab && chapterBrowseMode === 'chapter'
     const personalSubtabs = questionSource === 'personal' ? personalLibrarySubtabsMarkup() : ''
-    const personalTabMeta = questionSource === 'personal'
-      ? `<p class="wb3-personal-tab-meta">共 ${personalBankTotalCount()} 题</p>`
-      : ''
     const textbookSwitcher = browseByChapter ? textbookPickerMarkup() : ''
     const chapterSubtabs = isLibraryTab
       ? `<div class="wb3-chapter-subtabs" role="tablist" aria-label="飞象题库选题方式"><button type="button" role="tab" data-chapter-browse="chapter" aria-selected="${chapterBrowseMode === 'chapter'}" class="${chapterBrowseMode === 'chapter' ? 'active' : ''}">教材章节</button><button type="button" role="tab" data-chapter-browse="knowledge" aria-selected="${chapterBrowseMode === 'knowledge'}" class="${chapterBrowseMode === 'knowledge' ? 'active' : ''}">知识点</button></div>`
       : ''
     const resultsBody = visibleQuestions.length
       ? visibleQuestions.map((question) => questionCardMarkup(question, addedMap)).join('') + paging
+      : importResultRecord
+        ? `<div class="wb3-empty-results"><b>该文件录入的题目已全部删除</b><p>这些题目已不在我的题库中。</p><button type="button" class="wb3-empty-upload-btn" data-close-import-result>返回题目列表</button></div>`
       : emptyResultsMarkup(questions.length, treeScopedCount)
+    const officialSidebar = `<aside class="wb3-tree">
+      <label class="wb3-tree-subject"><select class="wb3-subject-switch" aria-label="飞象题库学段和学科">${Object.keys(curriculumCatalog).map((key) => `<option ${curriculumKey === key ? 'selected' : ''}>${key}</option>`).join('')}</select></label>
+      ${chapterSubtabs}
+      ${textbookSwitcher}
+      <div class="wb3-tree-list">${treeGroups.length ? treeGroups.map(([name]) => {
+        const isParent = parentNames.includes(name)
+        const expanded = expandedChapterParents.has(name)
+        const icon = browseByChapter && isParent
+          ? `<i data-toggle-chapter="${escapeHtml(name)}">${expanded ? '▾' : '▸'}</i>`
+          : isParent ? '⌄ ' : ''
+        return `<button type="button" class="${activeKnowledge === name ? 'active' : ''} ${isParent ? 'group' : ''} ${name.startsWith('☆') ? 'activity' : ''}" data-knowledge="${escapeHtml(name)}" data-tree-name="${escapeHtml(name.toLowerCase())}"><span>${icon}${escapeHtml(name)}</span></button>`
+      }).join('') : ''}</div>
+    </aside>`
+    const filtersMarkup = importResultRecord
+      ? `<div class="wb3-import-result-head"><button type="button" data-close-import-result>${icons.back}<span>返回题目列表</span></button><div><b title="${escapeHtml(importResultRecord.filename)}">${escapeHtml(importResultRecord.filename)}</b><span>AI录题完成 · 共 ${questions.length} 道题 · 已自动添加题目标签</span></div></div>`
+      : isLibraryTab
+      ? `<div class="wb3-results-filters"><label><select id="wb3FilterType" aria-label="题型"><option value="全部题型" ${filterType === '全部题型' ? 'selected' : ''}>全部题型</option>${typeOptions.map((name) => `<option value="${escapeHtml(name)}" ${filterType === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label><select id="wb3FilterDifficulty" aria-label="难度"><option value="全部难度" ${filterDifficulty === '全部难度' ? 'selected' : ''}>全部难度</option>${difficultyOptions.map((name) => `<option ${filterDifficulty === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="wb3-filter-search"><span class="wb3-main-search">${icons.search}<input id="wb3TreeSearch" type="search" value="${escapeHtml(treeSearchQuery)}" placeholder="${browseByChapter ? '搜索教材章节或题干关键词' : '搜索知识点或题干关键词'}"></span></label></div>`
+      : `<div class="wb3-results-filters wb3-personal-filter-bar"><label class="wb3-personal-scope-filter ${personalCurriculumFilter !== 'all' ? 'is-active' : ''}"><select id="wb3PersonalCurriculumFilter" aria-label="阶段和科目"><option value="all">阶段·科目</option>${curriculumOptions.map((name) => `<option value="${escapeHtml(name)}" ${personalCurriculumFilter === name ? 'selected' : ''}>${escapeHtml(curriculumTagLabel(name))}</option>`).join('')}</select></label><label class="wb3-personal-type-filter ${filterType !== '全部题型' ? 'is-active' : ''}"><select id="wb3FilterType" aria-label="题型"><option value="全部题型" ${filterType === '全部题型' ? 'selected' : ''}>题型</option>${typeOptions.map((name) => `<option value="${escapeHtml(name)}" ${filterType === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="wb3-personal-difficulty-filter ${filterDifficulty !== '全部难度' ? 'is-active' : ''}"><select id="wb3FilterDifficulty" aria-label="难度"><option value="全部难度" ${filterDifficulty === '全部难度' ? 'selected' : ''}>难度</option>${difficultyOptions.map((name) => `<option ${filterDifficulty === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="wb3-personal-knowledge-filter ${personalKnowledgeFilter !== 'all' ? 'is-active' : ''}"><select id="wb3PersonalKnowledgeFilter" aria-label="知识点"><option value="all">知识点</option>${knowledgeOptions.map((name) => `<option value="${escapeHtml(name)}" ${personalKnowledgeFilter === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="wb3-personal-tag-filter ${selectedPersonalTag ? 'is-active' : ''}"><select id="wb3PersonalTagFilter" aria-label="自定义标签"><option value="">自定义标签</option>${personalTagOptions().map((tag) => `<option value="${escapeHtml(tag)}" ${selectedPersonalTag === tag ? 'selected' : ''}>${escapeHtml(tag)}（${personalCollectionCount(`tag:${tag}`)}）</option>`).join('')}</select></label><label class="wb3-filter-search"><span class="wb3-main-search">${icons.search}<input id="wb3TreeSearch" type="search" value="${escapeHtml(treeSearchQuery)}" placeholder="搜索题干或标签" aria-label="搜索题干或标签"></span></label>${hasPersonalFilters ? '<button type="button" class="wb3-filter-reset" data-clear-bank-filters>重置</button>' : ''}<button type="button" class="wb3-batch-mode-toggle ${personalBatchMode ? 'active' : ''}" data-toggle-personal-batch>${personalBatchMode ? '退出批量' : '批量管理'}</button></div>`
     return `<section class="wb3-library">
       ${workspaceTabsMarkup()}
       ${personalSubtabs}
-      <div class="wb3-library-body">
-        <aside class="wb3-tree">
-          ${chapterSubtabs}
-          ${textbookSwitcher}
-          ${personalTabMeta}
-          <div class="wb3-tree-list">${treeGroups.length ? treeGroups.map(([name]) => {
-            const isParent = parentNames.includes(name)
-            const expanded = expandedChapterParents.has(name)
-            const icon = browseByChapter && isParent
-              ? `<i data-toggle-chapter="${escapeHtml(name)}">${expanded ? '▾' : '▸'}</i>`
-              : isParent ? '⌄ ' : ''
-            return `<button type="button" class="${activeKnowledge === name ? 'active' : ''} ${isParent ? 'group' : ''} ${name.startsWith('☆') ? 'activity' : ''}" data-knowledge="${escapeHtml(name)}" data-tree-name="${escapeHtml(name.toLowerCase())}"><span>${icon}${escapeHtml(name)}</span>${questionSource === 'personal' ? `<em>${knowledgeCount(name)}</em>` : ''}</button>`
-          }).join('') : ''}</div>
-        </aside>
+      <div class="wb3-library-body ${isLibraryTab ? '' : 'wb3-library-body-personal'}">
+        ${isLibraryTab ? officialSidebar : ''}
         <div class="wb3-results">
           <header class="wb3-results-head">
-            <div class="wb3-results-filters"><label><select id="wb3FilterType" aria-label="题型"><option value="全部题型" ${filterType === '全部题型' ? 'selected' : ''}>全部题型</option><option ${filterType === '选择题' ? 'selected' : ''}>选择题</option><option ${filterType === '填空题' ? 'selected' : ''}>填空题</option><option ${filterType === '解答题' ? 'selected' : ''}>解答题</option></select></label><label><select id="wb3FilterDifficulty" aria-label="难度"><option value="全部难度" ${filterDifficulty === '全部难度' ? 'selected' : ''}>全部难度</option>${difficultyOptions.map((name) => `<option ${filterDifficulty === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="wb3-filter-search"><span class="wb3-main-search">${icons.search}<input id="wb3TreeSearch" type="search" value="${escapeHtml(treeSearchQuery)}" placeholder="${browseByChapter ? '搜索教材章节或题干关键词' : '搜索知识点或题干关键词'}"></span></label></div>
+            ${filtersMarkup}
           </header>
-          ${uploadParsing ? `<div class="wb3-upload-status"><i></i>正在解析上传文件，完成后题目进入「我的题库」可选用…</div>` : ''}
+          ${personalBulkTagToolbarMarkup()}
+          ${importCompletionNoticeMarkup()}
+          ${uploadParsing ? `<div class="wb3-upload-status"><i></i>AI 录题正在解析，完成后题目进入「我的题库」…</div>` : ''}
           <div class="wb3-result-scroll">${resultsBody}</div>${unlockPrompt}
         </div>
+        ${questionSource === 'personal' ? aiRecordingDrawerMarkup() : ''}
       </div>
     </section>`
   }
@@ -1928,10 +2217,10 @@
       : `<div class="wb3-empty-sheet">
           <span class="wb3-empty-icon">${icons.blank}</span>
           <b>当前题单还没有题目</b>
-          <p>可以从飞象题库选择，也可以通过上传文件或 AI 组题添加题目；已保存题单可在「我的题库 → 题单」中选用。</p>
+          <p>可以从飞象题库或我的题库选题，也可以让 AI 组题；要导入自有试题，请前往「我的题库 → 上传文件」。</p>
           <div class="wb3-empty-actions">
             <button type="button" data-empty-import="library">${icons.knowledge}去飞象题库</button>
-            <button type="button" data-empty-import="add-more">${icons.plus}组题工具</button>
+            <button type="button" data-empty-import="ai-create">${icons.sparkle}AI组题</button>
           </div>
         </div>`
 
@@ -1983,6 +2272,224 @@
       ? '该题已加入右侧当前题单，确认删除后将从<strong>我的题库与当前画布</strong>中一并移除。'
       : '删除后无法再从「我的题库」选用。'
     return `<div class="wb3-overlay" data-personal-delete-overlay><div class="wb3-unlock-dialog wb3-confirm-dialog" role="dialog" aria-labelledby="wb3PersonalDeleteTitle"><span>${icons.trash}</span><h3 id="wb3PersonalDeleteTitle">从我的题库删除？</h3><p>${hint}</p><div><button type="button" data-personal-delete-cancel>取消</button><button type="button" class="primary danger" data-personal-delete-confirm>确认删除</button></div></div></div>`
+  }
+
+  function renderPreservingResultScroll() {
+    const scrollTop = root?.querySelector('.wb3-result-scroll')?.scrollTop || 0
+    const labelEditorScrollTop = root?.querySelector('.wb3-question-label-editor-body')?.scrollTop || 0
+    const recordingDrawerScrollTop = root?.querySelector('.wb3-ai-recording-task-list')?.scrollTop || 0
+    render()
+    window.requestAnimationFrame(() => {
+      const scroller = root?.querySelector('.wb3-result-scroll')
+      if (scroller) scroller.scrollTop = scrollTop
+      const labelEditorScroller = root?.querySelector('.wb3-question-label-editor-body')
+      if (labelEditorScroller) labelEditorScroller.scrollTop = labelEditorScrollTop
+      const recordingDrawerScroller = root?.querySelector('.wb3-ai-recording-task-list')
+      if (recordingDrawerScroller) recordingDrawerScroller.scrollTop = recordingDrawerScrollTop
+    })
+  }
+
+  function openQuestionLabelEditor(questionId, focus = 'curriculum') {
+    const question = personalQuestions.find((item) => item.id === questionId)
+    if (!question) return
+    questionLabelEditorId = question.id
+    questionLabelEditorFocus = ['curriculum', 'type', 'difficulty', 'knowledge', 'custom'].includes(focus) ? focus : 'curriculum'
+    questionLabelDropdownOpen = questionLabelEditorFocus === 'custom' ? '' : questionLabelEditorFocus
+    questionLabelDropdownQuery = ''
+    questionLabelDraft = {
+      curriculumTags: [...questionCurriculumTags(question)],
+      typeTags: [...questionTypeTags(question)],
+      difficulty: questionDifficultyTags(question)[0] || '中等',
+      knowledgeTags: [...questionKnowledgeTags(question)],
+      customTags: [...(question.customTags || [])],
+    }
+    renderPreservingResultScroll()
+    window.requestAnimationFrame(() => {
+      root?.querySelector(`[data-question-label-group="${questionLabelEditorFocus}"]`)?.scrollIntoView({ block: 'nearest' })
+    })
+  }
+
+  function closeQuestionLabelEditor() {
+    questionLabelEditorId = ''
+    questionLabelEditorFocus = 'curriculum'
+    questionLabelDraft = null
+    questionLabelDropdownOpen = ''
+    questionLabelDropdownQuery = ''
+    renderPreservingResultScroll()
+  }
+
+  function saveQuestionLabels() {
+    const question = personalQuestions.find((item) => item.id === questionLabelEditorId)
+    if (!question || !questionLabelDraft) return
+    if (!questionLabelDraft.curriculumTags.length) { showToast('至少保留一个阶段·科目标签'); return }
+    if (!questionLabelDraft.typeTags.length) { showToast('至少保留一个题型标签'); return }
+    const allowedKnowledge = knowledgeOptionsForCurriculums(questionLabelDraft.curriculumTags)
+    const nextKnowledgeTags = questionLabelDraft.knowledgeTags.filter((tag) => allowedKnowledge.includes(tag))
+    const updates = {
+      curriculumTags: [...questionLabelDraft.curriculumTags],
+      typeTags: [...questionLabelDraft.typeTags],
+      difficultyTags: [questionLabelDraft.difficulty],
+      knowledgeTags: [...nextKnowledgeTags],
+      customTags: [...questionLabelDraft.customTags],
+      curriculum: questionLabelDraft.curriculumTags[0],
+      type: questionLabelDraft.typeTags[0],
+      difficulty: questionLabelDraft.difficulty,
+      knowledge: nextKnowledgeTags[0] || '',
+      labelsManuallyEdited: true,
+    }
+    Object.assign(question, updates)
+    let syncedCanvas = false
+    activeDraft.questions.forEach((item) => {
+      if (item.status !== 'confirmed' || item.sourceId !== question.id) return
+      Object.assign(item, {
+        ...updates,
+        curriculumTags: [...updates.curriculumTags],
+        typeTags: [...updates.typeTags],
+        difficultyTags: [...updates.difficultyTags],
+        knowledgeTags: [...updates.knowledgeTags],
+        customTags: [...updates.customTags],
+      })
+      syncedCanvas = true
+    })
+    if (syncedCanvas) persistDraft()
+    personalTagCatalog = [...new Set([...personalTagCatalog, ...updates.customTags])]
+    if (personalCurriculumFilter !== 'all' && !personalCurriculumOptions().includes(personalCurriculumFilter)) personalCurriculumFilter = 'all'
+    if (personalKnowledgeFilter !== 'all' && !personalKnowledgeOptions().includes(personalKnowledgeFilter)) personalKnowledgeFilter = 'all'
+    if (filterType !== '全部题型' && !personalQuestions.some((item) => questionTypeTags(item).includes(filterType))) filterType = '全部题型'
+    if (filterDifficulty !== '全部难度' && !personalQuestions.some((item) => questionDifficultyTags(item).includes(filterDifficulty))) filterDifficulty = '全部难度'
+    if (personalCollection.startsWith('tag:') && personalCollectionCount(personalCollection) === 0) personalCollection = 'all'
+    questionLabelEditorId = ''
+    questionLabelEditorFocus = 'curriculum'
+    questionLabelDraft = null
+    questionLabelDropdownOpen = ''
+    questionLabelDropdownQuery = ''
+    renderPreservingResultScroll()
+    showToast(syncedCanvas ? '题目标签已更新，并同步到当前题单' : '题目标签已更新')
+  }
+
+  function questionLabelOptionMarkup(group, value, selected, label = value) {
+    return `<button type="button" class="${selected ? 'selected' : ''}" data-toggle-question-label="${escapeHtml(value)}" data-question-label-kind="${group}" data-question-label-option-text="${escapeHtml(String(label).toLowerCase())}" aria-pressed="${selected}"><span>${escapeHtml(label)}</span>${selected ? icons.check : ''}</button>`
+  }
+
+  function questionLabelDropdownMarkup(group, title, options, selectedValues, { multiple = true, formatter = (value) => value } = {}) {
+    const isOpen = questionLabelDropdownOpen === group
+    const selectedLabels = selectedValues.map(formatter)
+    const selectedSummary = selectedLabels.length
+      ? `${selectedLabels.slice(0, 2).join('、')}${selectedLabels.length > 2 ? ` +${selectedLabels.length - 2}` : ''}`
+      : `请选择${title}`
+    const query = isOpen ? questionLabelDropdownQuery.trim().toLowerCase() : ''
+    const matchedOptions = query ? options.filter((value) => String(formatter(value)).toLowerCase().includes(query)) : options
+    const visibleOptions = matchedOptions.slice(0, 80)
+    const optionMarkup = visibleOptions.map((value) => questionLabelOptionMarkup(group, value, selectedValues.includes(value), formatter(value))).join('')
+    const resultHint = matchedOptions.length > visibleOptions.length
+      ? `<p class="wb3-question-label-dropdown-hint">还有 ${matchedOptions.length - visibleOptions.length} 项，请继续输入关键词</p>`
+      : ''
+    return `<section class="wb3-question-label-editor-field ${questionLabelEditorFocus === group ? 'focused' : ''}" data-question-label-group="${group}">
+      <header><b>${title}</b><span>${multiple ? '可多选' : '单选'}</span></header>
+      <div class="wb3-question-label-select ${isOpen ? 'open' : ''}">
+        <button type="button" class="wb3-question-label-select-trigger" data-toggle-question-label-dropdown="${group}" aria-expanded="${isOpen}"><span class="${selectedLabels.length ? '' : 'placeholder'}">${escapeHtml(selectedSummary)}</span><i aria-hidden="true">⌄</i></button>
+        ${isOpen ? `<div class="wb3-question-label-dropdown"><label>${icons.search}<input type="search" value="${escapeHtml(questionLabelDropdownQuery)}" data-question-label-dropdown-search="${group}" placeholder="搜索${title}" autocomplete="off"></label><div class="wb3-question-label-dropdown-meta">已选 ${selectedValues.length} 项 · 共 ${options.length} 项</div><div class="wb3-question-label-dropdown-options" role="listbox" aria-multiselectable="${multiple}">${optionMarkup || '<p class="wb3-question-label-dropdown-empty">没有匹配项</p>'}</div>${resultHint}</div>` : ''}
+      </div>
+    </section>`
+  }
+
+  function createQuestionCustomTag() {
+    if (!questionLabelDraft) return
+    const input = $('#wb3NewQuestionCustomTag', root)
+    const tag = (input?.value || '').trim().replace(/\s+/g, ' ')
+    if (!tag) { showToast('请输入自定义标签'); input?.focus(); return }
+    if (questionLabelDraft.customTags.includes(tag)) { showToast('当前题目已添加该标签'); input?.focus(); return }
+    questionLabelDraft.customTags = [...questionLabelDraft.customTags, tag]
+    questionLabelEditorFocus = 'custom'
+    renderPreservingResultScroll()
+    window.requestAnimationFrame(() => $('#wb3NewQuestionCustomTag', root)?.focus())
+  }
+
+  function questionLabelEditorMarkup() {
+    const question = personalQuestions.find((item) => item.id === questionLabelEditorId)
+    if (!question || !questionLabelDraft) return ''
+    const typeOptions = [...new Set([...SYSTEM_QUESTION_TYPE_TAGS, ...questionLabelDraft.typeTags])]
+    const difficultyOptions = [...new Set([...bankQuestions.map((item) => item.difficulty).filter(Boolean), questionLabelDraft.difficulty])]
+    const knowledgeOptions = [...new Set([
+      ...knowledgeOptionsForCurriculums(questionLabelDraft.curriculumTags),
+      ...questionLabelDraft.knowledgeTags,
+    ])]
+    const customOptions = [...new Set([...personalTagOptions(), ...questionLabelDraft.customTags])]
+    return `<div class="wb3-overlay wb3-question-label-overlay" data-question-label-overlay><section class="wb3-question-label-dialog" role="dialog" aria-modal="true" aria-labelledby="wb3QuestionLabelTitle">
+      <header><span>${icons.tag}</span><div><h3 id="wb3QuestionLabelTitle">编辑题目标签</h3><p>系统标签从飞象标签库选择，自定义标签由你自由创建</p></div><button type="button" data-close-question-label-editor aria-label="关闭">×</button></header>
+      <div class="wb3-question-label-editor-body">
+        ${questionLabelDropdownMarkup('curriculum', '阶段·科目', Object.keys(curriculumCatalog), questionLabelDraft.curriculumTags, { formatter: curriculumTagLabel })}
+        ${questionLabelDropdownMarkup('type', '题型', typeOptions, questionLabelDraft.typeTags)}
+        ${questionLabelDropdownMarkup('difficulty', '难度', difficultyOptions, [questionLabelDraft.difficulty], { multiple: false })}
+        ${questionLabelDropdownMarkup('knowledge', '知识点', knowledgeOptions, questionLabelDraft.knowledgeTags)}
+        <section class="wb3-question-label-editor-group ${questionLabelEditorFocus === 'custom' ? 'focused' : ''} custom" data-question-label-group="custom"><header><b>自定义标签</b><span>自由创建</span></header><div>${customOptions.map((value) => questionLabelOptionMarkup('custom', value, questionLabelDraft.customTags.includes(value))).join('')}<label class="wb3-custom-tag-compose"><span aria-hidden="true">${icons.plus}</span><input id="wb3NewQuestionCustomTag" maxlength="12" placeholder="新建标签，回车添加" aria-label="新建自定义标签"></label></div></section>
+      </div>
+      <footer><span>人工修改后，AI 不再自动覆盖这些标签</span><button type="button" data-close-question-label-editor>取消</button><button type="button" class="primary" data-save-question-labels>保存</button></footer>
+    </section></div>`
+  }
+
+  function openPersonalTagEditor(questionIds) {
+    personalTagEditorQuestionIds = [...new Set(questionIds)].filter((id) => personalQuestions.some((question) => question.id === id))
+    pendingPersonalTags = new Set()
+    renderPreservingResultScroll()
+    window.requestAnimationFrame(() => $('#wb3NewPersonalTag', root)?.focus())
+  }
+
+  function closePersonalTagEditor() {
+    personalTagEditorQuestionIds = []
+    pendingPersonalTags = new Set()
+    renderPreservingResultScroll()
+  }
+
+  function applyPersonalTags() {
+    const tags = [...pendingPersonalTags]
+    if (!personalTagEditorQuestionIds.length || !tags.length) return
+    personalQuestions.forEach((question) => {
+      if (!personalTagEditorQuestionIds.includes(question.id)) return
+      question.customTags = [...new Set([...(question.customTags || []), ...tags])]
+    })
+    personalTagCatalog = [...new Set([...personalTagCatalog, ...tags])]
+    const count = personalTagEditorQuestionIds.length
+    personalTagEditorQuestionIds = []
+    pendingPersonalTags = new Set()
+    renderPreservingResultScroll()
+    showToast(count > 1 ? `已为 ${count} 道题添加自定义标签` : '自定义标签已添加')
+  }
+
+  function removePersonalTag(questionId, tag) {
+    const question = personalQuestions.find((item) => item.id === questionId)
+    if (!question) return
+    question.customTags = (question.customTags || []).filter((item) => item !== tag)
+    renderPreservingResultScroll()
+    showToast(`已移除自定义标签“${tag}”`)
+  }
+
+  function personalTagEditorMarkup() {
+    const targetQuestions = personalTagEditorQuestionIds.map((id) => personalQuestions.find((question) => question.id === id)).filter(Boolean)
+    if (!targetQuestions.length) return ''
+    const options = personalTagOptions()
+    const optionMarkup = options.length
+      ? options.map((tag) => {
+        const assignedCount = targetQuestions.filter((question) => (question.customTags || []).includes(tag)).length
+        const assignedToAll = assignedCount === targetQuestions.length
+        const selected = pendingPersonalTags.has(tag)
+        const status = assignedToAll ? '<em>已添加</em>' : assignedCount ? '<em>部分已有</em>' : ''
+        return `<button type="button" class="${selected ? 'selected' : ''} ${assignedToAll ? 'assigned' : ''}" data-toggle-personal-tag="${escapeHtml(tag)}" ${assignedToAll ? 'disabled' : ''}><span>${escapeHtml(tag)}</span>${status}${selected ? icons.check : ''}</button>`
+      }).join('')
+      : '<p class="wb3-personal-tag-empty">还没有自定义标签，可在下方新建。</p>'
+    const countText = targetQuestions.length > 1 ? `已选择 ${targetQuestions.length} 道题` : '当前题目'
+    return `<div class="wb3-overlay wb3-personal-tag-overlay" data-personal-tag-overlay><section class="wb3-personal-tag-dialog" role="dialog" aria-modal="true" aria-labelledby="wb3PersonalTagTitle">
+      <header><span>${icons.tag}</span><div><h3 id="wb3PersonalTagTitle">批量添加自定义标签</h3><p>${countText}，可同时添加多个标签</p></div><button type="button" data-close-personal-tag aria-label="关闭">×</button></header>
+      <div class="wb3-personal-tag-options">${optionMarkup}</div>
+      <div class="wb3-personal-tag-create"><input id="wb3NewPersonalTag" maxlength="12" placeholder="输入自定义标签"><button type="button" data-create-personal-tag>新建并选中</button></div>
+      <footer><button type="button" data-close-personal-tag>取消</button><button type="button" class="primary" data-confirm-personal-tag ${pendingPersonalTags.size ? '' : 'disabled'}>添加自定义标签</button></footer>
+    </section></div>`
+  }
+
+  function personalBulkTagToolbarMarkup() {
+    const count = [...selectedPersonalQuestionIds].filter((id) => personalQuestions.some((question) => question.id === id)).length
+    if (!personalBatchMode || questionSource !== 'personal' || importWorkspaceView !== 'library') return ''
+    return `<div class="wb3-personal-bulk-toolbar" role="toolbar" aria-label="批量管理题目"><span>${count ? `已选 <b>${count}</b> 道题` : '请选择要批量处理的题目'}</span><button type="button" data-clear-personal-selection ${count ? '' : 'disabled'}>清空选择</button><button type="button" class="primary" data-open-bulk-personal-tag ${count ? '' : 'disabled'}>${icons.tag}添加自定义标签</button></div>`
   }
 
   function paperActionPromptMarkup() {
@@ -2054,6 +2561,8 @@
       persistDraft()
     }
     personalQuestions = personalQuestions.filter((question) => question.id !== id)
+    selectedPersonalQuestionIds.delete(id)
+    personalTagEditorQuestionIds = personalTagEditorQuestionIds.filter((questionId) => questionId !== id)
     revealedAnswerIds.delete(id)
     if (adaptRequest?.source?.id === id) adaptRequest = null
     if (adaptPicker?.source?.id === id) adaptPicker = null
@@ -2067,6 +2576,8 @@
     captureAiCreateInputDraft()
     root.innerHTML = `<div class="wb3-shell">${leftPanelMarkup()}${rightPanelMarkup()}</div>
     ${knowledgeModalMarkup()}
+    ${questionLabelEditorMarkup()}
+    ${personalTagEditorMarkup()}
     ${personalDeletePromptMarkup()}
     ${paperActionPromptMarkup()}
     ${saveBeforeNewDialogMarkup()}
@@ -2230,20 +2741,40 @@
     if (!file) return
     const recordId = makeId('record')
     aiImportRecords.unshift({ id: recordId, filename: file.name, status: 'processing', stage: '正在识别题目', submittedAt: '刚刚', eta: '预计还需 4–10 分钟', questions: [] })
-    window.setTimeout(() => completeImportRecord(recordId), 6500)
+    scheduleImportRecordProgress(recordId)
     return recordId
   }
 
+  function scheduleImportRecordProgress(recordId) {
+    const phases = [
+      [1700, '正在提取答案与解析'],
+      [3400, '正在添加题目标签'],
+      [5000, '正在存入我的题库'],
+    ]
+    phases.forEach(([delay, stage]) => window.setTimeout(() => {
+      const record = aiImportRecords.find((item) => item.id === recordId)
+      if (!record || record.status !== 'processing') return
+      record.stage = stage
+      if (root && !root.hidden) renderPreservingResultScroll()
+    }, delay))
+    window.setTimeout(() => completeImportRecord(recordId), 6500)
+  }
+
   function handleUploadFiles(fileList) {
-    const files = [...(fileList || [])].filter(Boolean)
-    if (!files.length) return
+    const candidates = [...(fileList || [])].filter(Boolean)
+    if (!candidates.length) return
+    const supportedFilePattern = /\.(doc|docx|pdf|png|jpe?g)$/i
+    const files = candidates.filter((file) => supportedFilePattern.test(file.name || '') && Number(file.size || 0) <= 20 * 1024 * 1024)
+    const rejectedCount = candidates.length - files.length
+    if (!files.length) {
+      showToast('请选择 20 MB 以内的 PNG、JPG、PDF、DOC 或 DOCX 文件')
+      return
+    }
     importMenuOpen = false
-    if (!openWorkspaceTabs.includes('upload')) openWorkspaceTabs.push('upload')
-    activeImportRecordId = ''
-    importWorkspaceView = 'ai-upload'
+    openAiRecording()
     files.forEach((file) => startImportRecord(file))
-    render()
-    showToast(files.length > 1 ? `已上传 ${files.length} 个文件，正在 AI 解析` : '文件已上传，正在 AI 解析')
+    renderPreservingResultScroll()
+    showToast(rejectedCount ? `已开始 ${files.length} 个任务，${rejectedCount} 个文件格式或大小不符合要求` : files.length > 1 ? `已上传 ${files.length} 个文件，正在 AI 解析` : '文件已上传，正在 AI 解析')
   }
 
   function importKnowledgePaper(paperId) {
@@ -2266,7 +2797,7 @@
     const requestedCount = Number(/(\d+)\s*道/.exec(prompt)?.[1] || (mode === 'adapt' ? 2 : 5))
     const activeConversationRecord = importWorkspaceView === 'ai-compose-record' ? aiComposeRecords.find((record) => record.id === activeAiComposeRecordId) : null
     const previousComposeRecord = activeConversationRecord || aiComposeRecords.find((record) => record.autoAdded)
-    const reusedTabId = mode === 'append' && activeConversationRecord ? `compose:${activeConversationRecord.id}` : ''
+    const continuesConversation = mode === 'append' && Boolean(activeConversationRecord)
     const composeId = makeId('compose')
     const conversationId = activeConversationRecord?.conversationId || activeConversationRecord?.id || composeId
     const conversationTurns = aiComposeRecords.filter((item) => (item.conversationId || item.id) === conversationId)
@@ -2286,7 +2817,7 @@
       originalQuestionId: activeDraft.questions.some((item) => item.id === selected?.id) ? selected.id : '',
       needsCanvasConfirmation: activeDraft.questions.some((item) => item.status === 'confirmed'),
       existingCount: activeDraft.questions.filter((item) => item.status === 'confirmed').length,
-      parentRecordId: reusedTabId ? previousComposeRecord.id : '',
+      parentRecordId: continuesConversation ? previousComposeRecord.id : '',
       plan: {
         count: mode === 'adapt' ? 2 : Math.min(requestedCount, 10),
         types: mode === 'adapt' ? selected.type : '选择、填空、解答',
@@ -2296,9 +2827,6 @@
       },
     }
     aiComposeRecords.unshift(composeRecord)
-    const composeTabId = `compose:${composeRecord.id}`
-    if (reusedTabId && openWorkspaceTabs.includes(reusedTabId)) openWorkspaceTabs = openWorkspaceTabs.map((id) => id === reusedTabId ? composeTabId : id)
-    else if (!openWorkspaceTabs.includes(composeTabId)) openWorkspaceTabs.push(composeTabId)
     activeAiComposeRecordId = composeRecord.id
     importWorkspaceView = 'ai-compose-record'
     render()
@@ -2462,27 +2990,6 @@
         return
       }
 
-      const closeWorkspaceTab = event.target.closest('[data-close-workspace-tab]')
-      if (closeWorkspaceTab) {
-        const id = closeWorkspaceTab.dataset.closeWorkspaceTab
-        openWorkspaceTabs = openWorkspaceTabs.filter((item) => item !== id)
-        if (activeWorkspaceTabId() === id) {
-          if (id.startsWith('paper:')) {
-            if (questionSource === 'personal') {
-              importWorkspaceView = 'library'
-              personalLibraryMode = 'papers'
-            } else importWorkspaceView = 'knowledge'
-          } else if (id.startsWith('record:')) importWorkspaceView = 'ai-upload'
-          else if (id.startsWith('compose:')) importWorkspaceView = 'ai-compose'
-          else importWorkspaceView = 'add-more'
-          activeImportRecordId = ''
-          if (!id.startsWith('paper:') || questionSource !== 'personal') previewKnowledgePaperId = ''
-          activeAiComposeRecordId = ''
-        }
-        render()
-        return
-      }
-
       const workspaceTab = event.target.closest('[data-workspace-tab]')
       if (workspaceTab) {
         const id = workspaceTab.dataset.workspaceTab
@@ -2490,12 +2997,186 @@
         if (id === 'personal') {
           switchToLibraryTab('personal')
           personalLibraryMode = 'questions'
+          personalCollection = 'all'
+          selectedPersonalQuestionIds = new Set()
           previewKnowledgePaperId = ''
           render()
           return
         }
-        if (id === 'add-more') { importWorkspaceView = 'add-more'; render(); return }
+        if (id === 'ai-create') { openWorkspaceTab('ai-create'); return }
+        if (id === 'add-more') { openWorkspaceTab('ai-create'); return }
         openWorkspaceTab(id)
+        return
+      }
+
+      if (event.target.closest('[data-toggle-personal-batch]')) {
+        personalBatchMode = !personalBatchMode
+        selectedPersonalQuestionIds = new Set()
+        renderPreservingResultScroll()
+        return
+      }
+
+      const openQuestionLabels = event.target.closest('[data-open-question-label-editor]')
+      if (openQuestionLabels) {
+        openQuestionLabelEditor(openQuestionLabels.dataset.openQuestionLabelEditor, openQuestionLabels.dataset.labelEditorFocus)
+        return
+      }
+
+      const toggleQuestionLabelDropdown = event.target.closest('[data-toggle-question-label-dropdown]')
+      if (toggleQuestionLabelDropdown && questionLabelDraft) {
+        const kind = toggleQuestionLabelDropdown.dataset.toggleQuestionLabelDropdown
+        questionLabelEditorFocus = kind
+        questionLabelDropdownOpen = questionLabelDropdownOpen === kind ? '' : kind
+        questionLabelDropdownQuery = ''
+        renderPreservingResultScroll()
+        if (questionLabelDropdownOpen) window.requestAnimationFrame(() => root?.querySelector(`[data-question-label-dropdown-search="${kind}"]`)?.focus())
+        return
+      }
+
+      const toggleQuestionLabel = event.target.closest('[data-toggle-question-label]')
+      if (toggleQuestionLabel && questionLabelDraft) {
+        const kind = toggleQuestionLabel.dataset.questionLabelKind
+        const value = toggleQuestionLabel.dataset.toggleQuestionLabel
+        let tagFeedback = ''
+        questionLabelEditorFocus = kind || questionLabelEditorFocus
+        if (kind === 'difficulty') {
+          questionLabelDraft.difficulty = value
+          questionLabelDropdownOpen = ''
+          questionLabelDropdownQuery = ''
+        } else {
+          const key = kind === 'curriculum' ? 'curriculumTags' : kind === 'type' ? 'typeTags' : kind === 'knowledge' ? 'knowledgeTags' : kind === 'custom' ? 'customTags' : ''
+          if (!key) return
+          const current = [...questionLabelDraft[key]]
+          const selected = current.includes(value)
+          if (selected && ['curriculumTags', 'typeTags'].includes(key) && current.length === 1) {
+            showToast(key === 'curriculumTags' ? '至少保留一个阶段·科目标签' : '至少保留一个题型标签')
+            return
+          }
+          questionLabelDraft[key] = selected ? current.filter((item) => item !== value) : [...current, value]
+          if (key === 'curriculumTags') {
+            const allowedKnowledge = knowledgeOptionsForCurriculums(questionLabelDraft.curriculumTags)
+            const compatibleKnowledge = questionLabelDraft.knowledgeTags.filter((tag) => allowedKnowledge.includes(tag))
+            if (compatibleKnowledge.length !== questionLabelDraft.knowledgeTags.length) tagFeedback = '已移除与当前阶段·科目不匹配的知识点'
+            questionLabelDraft.knowledgeTags = compatibleKnowledge
+          }
+        }
+        renderPreservingResultScroll()
+        if (questionLabelDropdownOpen) window.requestAnimationFrame(() => {
+          const input = root?.querySelector(`[data-question-label-dropdown-search="${questionLabelDropdownOpen}"]`)
+          input?.focus()
+          input?.setSelectionRange(questionLabelDropdownQuery.length, questionLabelDropdownQuery.length)
+        })
+        if (tagFeedback) showToast(tagFeedback)
+        return
+      }
+
+      if (event.target.closest('[data-save-question-labels]')) {
+        saveQuestionLabels()
+        return
+      }
+
+      if (event.target.closest('[data-close-question-label-editor]') || event.target.matches('[data-question-label-overlay]')) {
+        closeQuestionLabelEditor()
+        return
+      }
+
+      const removePersonalTagButton = event.target.closest('[data-remove-personal-tag]')
+      if (removePersonalTagButton) {
+        removePersonalTag(removePersonalTagButton.dataset.personalQuestionId, removePersonalTagButton.dataset.removePersonalTag)
+        return
+      }
+
+      const openPersonalTagButton = event.target.closest('[data-open-personal-tag]')
+      if (openPersonalTagButton) {
+        openPersonalTagEditor([openPersonalTagButton.dataset.openPersonalTag])
+        return
+      }
+
+      if (event.target.closest('[data-open-bulk-personal-tag]')) {
+        openPersonalTagEditor([...selectedPersonalQuestionIds])
+        return
+      }
+
+      const togglePersonalTag = event.target.closest('[data-toggle-personal-tag]')
+      if (togglePersonalTag && !togglePersonalTag.disabled) {
+        const tag = togglePersonalTag.dataset.togglePersonalTag
+        if (pendingPersonalTags.has(tag)) pendingPersonalTags.delete(tag)
+        else pendingPersonalTags.add(tag)
+        renderPreservingResultScroll()
+        return
+      }
+
+      if (event.target.closest('[data-create-personal-tag]')) {
+        const input = $('#wb3NewPersonalTag', root)
+        const tag = (input?.value || '').trim().replace(/\s+/g, ' ')
+        if (!tag) { showToast('请输入标签名称'); input?.focus(); return }
+        const targets = personalTagEditorQuestionIds.map((id) => personalQuestions.find((question) => question.id === id)).filter(Boolean)
+        if (targets.length && targets.every((question) => (question.customTags || []).includes(tag))) {
+          showToast('所选题目已添加该标签')
+          return
+        }
+        pendingPersonalTags.add(tag)
+        renderPreservingResultScroll()
+        window.requestAnimationFrame(() => $('#wb3NewPersonalTag', root)?.focus())
+        return
+      }
+
+      if (event.target.closest('[data-confirm-personal-tag]')) {
+        applyPersonalTags()
+        return
+      }
+
+      if (event.target.closest('[data-close-personal-tag]') || event.target.matches('[data-personal-tag-overlay]')) {
+        closePersonalTagEditor()
+        return
+      }
+
+      if (event.target.closest('[data-clear-personal-selection]')) {
+        selectedPersonalQuestionIds = new Set()
+        renderPreservingResultScroll()
+        return
+      }
+
+      if (event.target.closest('[data-open-personal-import]')) {
+        openAiRecording()
+        renderPreservingResultScroll()
+        window.requestAnimationFrame(() => root?.querySelector('.wb3-ai-recording-drawer [data-close-ai-recording]')?.focus())
+        return
+      }
+
+      if (event.target.closest('[data-close-ai-recording]')) {
+        aiRecordingDrawerOpen = false
+        renderPreservingResultScroll()
+        window.requestAnimationFrame(() => root?.querySelector('[data-open-personal-import]')?.focus())
+        return
+      }
+
+      const viewImportedRecord = event.target.closest('[data-view-imported-record]')
+      if (viewImportedRecord) {
+        viewImportedQuestions(viewImportedRecord.dataset.viewImportedRecord)
+        return
+      }
+
+      if (event.target.closest('[data-view-imported-questions]')) {
+        viewImportedQuestions()
+        return
+      }
+
+      if (event.target.closest('[data-close-import-result]')) {
+        const returnScrollTop = personalImportReturnScrollTop
+        personalImportRecordViewId = ''
+        personalImportReturnScrollTop = 0
+        render()
+        window.requestAnimationFrame(() => {
+          const scrollArea = root?.querySelector('.wb3-result-scroll')
+          if (scrollArea) scrollArea.scrollTop = returnScrollTop
+        })
+        return
+      }
+
+      if (event.target.closest('[data-dismiss-import-notice]')) {
+        aiImportRecords.forEach((record) => { if (record.status === 'completed') record.unread = false })
+        renderPreservingResultScroll()
         return
       }
 
@@ -2646,8 +3327,7 @@
       const importAction = event.target.closest('[data-import]')
       if (importAction) {
         importMenuOpen = false
-        if (importAction.dataset.import === 'upload') importWorkspaceView = 'ai-upload'
-        if (importAction.dataset.import === 'history') importWorkspaceView = 'ai-history'
+        if (importAction.dataset.import === 'upload' || importAction.dataset.import === 'history') openAiRecording()
         if (importAction.dataset.import === 'knowledge') openPersonalPapersLibrary()
         if (importAction.dataset.import === 'ai-compose') importWorkspaceView = 'ai-compose'
         render()
@@ -2727,10 +3407,12 @@
         downloadPaperWordWithAnswers()
         return
       }
-      if (event.target.closest('[data-download-brief]')) { event.preventDefault(); showToast('正在下载命题说明书 PDF'); return }
+      if (event.target.closest('[data-download-brief]')) { event.preventDefault(); showToast('正在下载组题说明 PDF'); return }
 
       const personalLibraryTab = event.target.closest('[data-personal-library]')
       if (personalLibraryTab) {
+        personalImportRecordViewId = ''
+        personalImportReturnScrollTop = 0
         personalLibraryMode = personalLibraryTab.dataset.personalLibrary === 'papers' ? 'papers' : 'questions'
         previewKnowledgePaperId = ''
         render()
@@ -2799,11 +3481,10 @@
       const emptyImport = event.target.closest('[data-empty-import]')
       if (emptyImport) {
         if (emptyImport.dataset.emptyImport === 'library') { switchToLibraryTab('official'); render(); return }
-        if (emptyImport.dataset.emptyImport === 'add-more') { importWorkspaceView = 'add-more'; render(); return }
+        if (emptyImport.dataset.emptyImport === 'add-more' || emptyImport.dataset.emptyImport === 'ai-create') { openWorkspaceTab('ai-create'); return }
         if (emptyImport.dataset.emptyImport === 'upload') {
-          if (!openWorkspaceTabs.includes('upload')) openWorkspaceTabs.push('upload')
-          importWorkspaceView = 'ai-upload'
-          render()
+          openAiRecording()
+          renderPreservingResultScroll()
           return
         }
         return
@@ -2885,6 +3566,9 @@
         treeSearchQuery = ''
         filterType = '全部题型'
         filterDifficulty = '全部难度'
+        personalCurriculumFilter = 'all'
+        personalKnowledgeFilter = 'all'
+        personalCollection = 'all'
         activeKnowledge = chapterBrowseMode === 'chapter' && questionSource === 'official'
           ? (Object.keys(currentChapterTree().parents)[0] || firstKnowledgeName())
           : firstKnowledgeName()
@@ -3079,6 +3763,18 @@
     })
 
     root.addEventListener('input', (event) => {
+      if (event.target.matches('[data-question-label-dropdown-search]')) {
+        questionLabelDropdownOpen = event.target.dataset.questionLabelDropdownSearch
+        questionLabelDropdownQuery = event.target.value
+        const caret = questionLabelDropdownQuery.length
+        renderPreservingResultScroll()
+        window.requestAnimationFrame(() => {
+          const input = root?.querySelector(`[data-question-label-dropdown-search="${questionLabelDropdownOpen}"]`)
+          input?.focus()
+          input?.setSelectionRange(caret, caret)
+        })
+        return
+      }
       if (event.target.id === 'wb3PersonalPaperSearch') {
         personalPaperSearchQuery = event.target.value
         const caret = personalPaperSearchQuery.length
@@ -3105,6 +3801,25 @@
       }
       if (event.target.id === 'wb3FilterType') { filterType = event.target.value; officialPage = 1; render(); return }
       if (event.target.id === 'wb3FilterDifficulty') { filterDifficulty = event.target.value; officialPage = 1; render(); return }
+      if (event.target.id === 'wb3PersonalCurriculumFilter') {
+        personalCurriculumFilter = event.target.value
+        personalKnowledgeFilter = 'all'
+        selectedPersonalQuestionIds = new Set()
+        render()
+        return
+      }
+      if (event.target.id === 'wb3PersonalKnowledgeFilter') {
+        personalKnowledgeFilter = event.target.value
+        selectedPersonalQuestionIds = new Set()
+        render()
+        return
+      }
+      if (event.target.id === 'wb3PersonalTagFilter') {
+        personalCollection = event.target.value ? `tag:${event.target.value}` : 'all'
+        selectedPersonalQuestionIds = new Set()
+        render()
+        return
+      }
       if (event.target.id === 'wb3DraftTitle' || event.target.id === 'wb3PaperTitle') {
         activeDraft.title = event.target.value
         persistDraft()
@@ -3115,6 +3830,27 @@
         paperFormat()[key] = Number(raw)
         persistDraft()
         render()
+      }
+    })
+
+    root.addEventListener('keydown', (event) => {
+      if (event.target.id === 'wb3NewPersonalTag' && event.key === 'Enter') {
+        event.preventDefault()
+        root.querySelector('[data-create-personal-tag]')?.click()
+      }
+      if (event.target.id === 'wb3NewQuestionCustomTag' && event.key === 'Enter') {
+        event.preventDefault()
+        createQuestionCustomTag()
+      }
+      if (event.key === 'Escape' && questionLabelEditorId) {
+        event.preventDefault()
+        closeQuestionLabelEditor()
+        return
+      }
+      if (event.key === 'Escape' && aiRecordingDrawerOpen) {
+        event.preventDefault()
+        aiRecordingDrawerOpen = false
+        renderPreservingResultScroll()
       }
     })
 
@@ -3166,6 +3902,13 @@
     })
 
     root.addEventListener('change', (event) => {
+      if (event.target.matches('[data-select-personal-question]')) {
+        const id = event.target.dataset.selectPersonalQuestion
+        if (event.target.checked) selectedPersonalQuestionIds.add(id)
+        else selectedPersonalQuestionIds.delete(id)
+        renderPreservingResultScroll()
+        return
+      }
       if (event.target.classList.contains('wb3-subject-switch')) {
         saveBankSearchToStorage()
         curriculumKey = event.target.value
@@ -3235,6 +3978,13 @@
     })
 
     root.addEventListener('dragover', (event) => {
+      const recordingDropzone = event.target.closest('.wb3-ai-recording-dropzone')
+      if (recordingDropzone && aiRecordingDrawerOpen) {
+        event.preventDefault()
+        event.dataTransfer.dropEffect = 'copy'
+        recordingDropzone.classList.add('is-dragging')
+        return
+      }
       if (!sheetDragId) return
       const article = event.target.closest('.wb3-sheet-q')
       if (!article || article.dataset.sheetId === sheetDragId) return
@@ -3246,6 +3996,12 @@
     })
 
     root.addEventListener('dragleave', (event) => {
+      const recordingDropzone = event.target.closest('.wb3-ai-recording-dropzone')
+      if (recordingDropzone) {
+        const related = event.relatedTarget
+        if (!related || !recordingDropzone.contains(related)) recordingDropzone.classList.remove('is-dragging')
+        return
+      }
       const article = event.target.closest('.wb3-sheet-q')
       if (!article) return
       const related = event.relatedTarget
@@ -3254,6 +4010,13 @@
     })
 
     root.addEventListener('drop', (event) => {
+      const recordingDropzone = event.target.closest('.wb3-ai-recording-dropzone')
+      if (recordingDropzone && aiRecordingDrawerOpen) {
+        event.preventDefault()
+        recordingDropzone.classList.remove('is-dragging')
+        handleUploadFiles(event.dataTransfer?.files)
+        return
+      }
       if (!sheetDragId) return
       const article = event.target.closest('.wb3-sheet-q')
       if (!article) return
@@ -3312,8 +4075,6 @@
       }
       aiComposeRecords.unshift(record)
     }
-    const tabId = `compose:${composeId}`
-    if (!openWorkspaceTabs.includes(tabId)) openWorkspaceTabs.push(tabId)
     activeAiComposeRecordId = composeId
     importWorkspaceView = 'ai-compose-record'
     return true
@@ -3353,10 +4114,19 @@
       textbookPickerOpen = false
       expandDefaultChapters()
       previewBankPaperId = ''
-      openWorkspaceTabs = []
       activeImportRecordId = ''
       activeAiComposeRecordId = ''
       previewKnowledgePaperId = ''
+      selectedPersonalQuestionIds = new Set()
+      personalBatchMode = false
+      aiRecordingDrawerOpen = false
+      personalImportRecordViewId = ''
+      personalImportReturnScrollTop = 0
+      personalTagEditorQuestionIds = []
+      pendingPersonalTags = new Set()
+      questionLabelEditorId = ''
+      questionLabelEditorFocus = 'curriculum'
+      questionLabelDraft = null
       adaptRequest = null
       adaptPicker = null
       restoreAiConversationHandoff()
@@ -3364,7 +4134,6 @@
       if (requestedPaperId && savedDraftPapers().some((paper) => paper.draftId === requestedPaperId)) {
         sessionStorage.removeItem('feixiang-question-workbench-open-paper')
         openPersonalPapersLibrary(`saved-${requestedPaperId}`)
-        openWorkspaceTabs = []
       }
       document.body.classList.add('fx-question-workbench-v3-open')
       root.hidden = false
@@ -3376,8 +4145,17 @@
       importMenuOpen = false
       knowledgeModalOpen = false
       importWorkspaceView = 'library'
-      openWorkspaceTabs = []
       activeAiComposeRecordId = ''
+      selectedPersonalQuestionIds = new Set()
+      personalBatchMode = false
+      aiRecordingDrawerOpen = false
+      personalImportRecordViewId = ''
+      personalImportReturnScrollTop = 0
+      personalTagEditorQuestionIds = []
+      pendingPersonalTags = new Set()
+      questionLabelEditorId = ''
+      questionLabelEditorFocus = 'curriculum'
+      questionLabelDraft = null
       adaptRequest = null
       adaptPicker = null
       document.body.classList.remove('fx-question-workbench-v3-open')
