@@ -370,7 +370,10 @@
   let importWorkspaceView = 'library'
   let activeImportRecordId = ''
   let activeAiComposeRecordId = ''
+  let aiComposeResultViewId = ''
+  let aiComposeReturnScrollTop = 0
   let previewKnowledgePaperId = ''
+  let personalPaperReturnScrollTop = 0
   let personalLibraryMode = 'questions'
   let personalCollection = 'all'
   let personalCurriculumFilter = 'all'
@@ -1285,6 +1288,8 @@
   function switchToLibraryTab(source) {
     saveBankSearchToStorage()
     aiRecordingDrawerOpen = false
+    aiComposeResultViewId = ''
+    aiComposeReturnScrollTop = 0
     personalImportRecordViewId = ''
     personalImportReturnScrollTop = 0
     importWorkspaceView = 'library'
@@ -1312,6 +1317,7 @@
     personalBatchMode = false
     personalLibraryMode = 'papers'
     previewKnowledgePaperId = paperId
+    personalPaperReturnScrollTop = 0
     previewBankPaperId = ''
     applyBankSearchFromStorage()
     officialPage = 1
@@ -1716,6 +1722,8 @@
 
   function openWorkspaceTab(id) {
     aiRecordingDrawerOpen = false
+    aiComposeResultViewId = ''
+    aiComposeReturnScrollTop = 0
     if (id === 'ai-create') {
       adaptRequest = null
       adaptPicker = null
@@ -1773,7 +1781,22 @@
       turns = [...parents, record]
     }
     const history = turns.filter((item) => item.id !== record.id)
-    return `${history.map((item, index) => `<section class="wb3-chat-turn history"><div class="wb3-chat-user"><span>我</span><p>${escapeHtml(item.prompt)}</p></div><div class="wb3-chat-ai"><span>${icons.sparkle}</span><div><b>第 ${index + 1} 轮 · AI 已完成组题</b><p>从题库匹配 ${item.questions.length} 道题，本轮记录已保留。</p><details><summary>展开本轮 ${item.questions.length} 道题</summary><div class="wb3-ai-generated-toolbar"><span>展开后仍可逐题选用</span><button type="button" data-compose-record-all="${item.id}">${item.allAdded ? '已全部加入' : '全部加入当前题单'}</button></div><div class="wb3-import-question-list">${item.questions.map((question) => questionCardMarkup(question, addedMap)).join('')}</div></details></div></div></section>`).join('')}<section class="wb3-chat-turn current"><div class="wb3-chat-user"><span>我</span><p>${escapeHtml(record.prompt)}</p></div><div class="wb3-chat-ai"><span>${icons.sparkle}</span><div><b>第 ${history.length + 1} 轮 · ${record.status === 'completed' ? 'AI 已完成组题' : 'AI 正在组题'}</b><p>${record.status === 'completed' ? `已匹配 ${record.questions.length} 道题，可在下方查看和选用。` : '正在理解要求并检索飞象题库与我的题库…'}</p></div></div></section>`
+    return `${history.map((item, index) => `<section class="wb3-chat-turn history"><div class="wb3-chat-user"><span>我</span><p>${escapeHtml(item.prompt)}</p></div><div class="wb3-chat-ai"><span>${icons.sparkle}</span><div><b>第 ${index + 1} 轮 · AI 已完成组题</b><p>从题库匹配 ${item.questions.length} 道题，本轮记录已保留。</p><button type="button" class="wb3-chat-result-link" data-view-compose-result="${item.id}">查看本轮题目</button></div></div></section>`).join('')}<section class="wb3-chat-turn current"><div class="wb3-chat-user"><span>我</span><p>${escapeHtml(record.prompt)}</p></div><div class="wb3-chat-ai"><span>${icons.sparkle}</span><div><b>第 ${history.length + 1} 轮 · ${record.status === 'completed' ? 'AI 已完成组题' : 'AI 正在组题'}</b><p>${record.status === 'completed' ? `已匹配 ${record.questions.length} 道题，可在下方查看和选用。` : '正在理解要求并检索飞象题库与我的题库…'}</p></div></div></section>`
+  }
+
+  function resultViewHeadMarkup({ backAttribute, backLabel, title, description, action = '' }) {
+    return `<div class="wb3-results-head wb3-paper-results-head"><div class="wb3-import-result-head"><button type="button" ${backAttribute}>${icons.back}<span>${escapeHtml(backLabel)}</span></button><div><b title="${escapeHtml(title)}">${escapeHtml(title)}</b><span>${escapeHtml(description)}</span></div>${action}</div></div>`
+  }
+
+  function openAiComposeResult(recordId) {
+    const record = aiComposeRecords.find((item) => item.id === recordId && item.status === 'completed')
+    if (!record || !record.questions.length) {
+      showToast(record ? '本轮没有可查看的题目' : '未找到这次组题记录')
+      return
+    }
+    aiComposeReturnScrollTop = root?.querySelector('.wb3-import-center-body')?.scrollTop || 0
+    aiComposeResultViewId = record.id
+    render()
   }
 
   function appendAssistMarkup(record) {
@@ -2012,7 +2035,7 @@
     }
 
     if (!sectionLabel) return ''
-    return `<div class="wb3-import-center-head"><button type="button" ${backAttribute}>${icons.back}${escapeHtml(backLabel)}</button><div class="wb3-import-breadcrumb" aria-label="当前位置"><span>${escapeHtml(parentLabel)}</span><i>/</i><b>${escapeHtml(sectionLabel)}</b>${detailLabel ? `<i>/</i><em title="${escapeHtml(detailLabel)}">${escapeHtml(detailLabel)}</em>` : ''}</div></div>`
+    return `<nav class="wb3-import-center-head wb3-import-breadcrumb" aria-label="当前位置"><button type="button" ${backAttribute} aria-label="${escapeHtml(backLabel)}">${escapeHtml(parentLabel)}</button><i>/</i><span>${escapeHtml(sectionLabel)}</span>${detailLabel ? `<i>/</i><b title="${escapeHtml(detailLabel)}">${escapeHtml(detailLabel)}</b>` : ''}</nav>`
   }
 
   function importWorkspaceMarkup() {
@@ -2020,9 +2043,18 @@
     const activeRecord = aiImportRecords.find((record) => record.id === activeImportRecordId)
     const activeComposeRecord = aiComposeRecords.find((record) => record.id === activeAiComposeRecordId)
     const previewPaper = allKnowledgePapers().find((paper) => paper.id === previewKnowledgePaperId)
+    const composeResultRecord = aiComposeRecords.find((record) => record.id === aiComposeResultViewId && record.status === 'completed')
     let content = ''
 
-    if (importWorkspaceView === 'ai-entry') {
+    if (composeResultRecord) {
+      content = `<div class="wb3-ai-compose-result-view">${resultViewHeadMarkup({
+        backAttribute: 'data-close-compose-result',
+        backLabel: importWorkspaceView === 'ai-compose-record' ? '返回历史对话' : '返回AI组题',
+        title: composeResultRecord.title,
+        description: `第 ${composeResultRecord.turnIndex || 1} 轮组题 · 共 ${composeResultRecord.questions.length} 道题 · ${composeResultRecord.prompt}`,
+        action: `<button type="button" class="primary" data-compose-record-all="${composeResultRecord.id}">${composeResultRecord.allAdded ? '已全部加入' : '全部加入当前题单'}</button>`,
+      })}<div class="wb3-result-scroll wb3-import-question-list">${composeResultRecord.questions.map((question) => questionCardMarkup(question, addedMap)).join('')}</div></div>`
+    } else if (importWorkspaceView === 'ai-entry') {
       content = `<div class="wb3-ai-create-page"><div class="wb3-import-page-title"><div><h2>AI组题</h2><p>描述题量、知识点和难度，AI 会从飞象题库和我的题库中检索匹配，结果将进入当前题单。</p></div></div><div class="wb3-ai-create-prompts"><button type="button" data-ai-create-suggestion="从题库匹配 10 道基础练习题">10 道基础题</button><button type="button" data-ai-create-suggestion="从题库组一份难度递进的综合练习">难度递进</button><button type="button" data-ai-create-suggestion="从题库补 3 道中等题，避免与现有题目重复">补充中等题</button></div>${aiCreateInputBlockMarkup()}${aiComposeHistoryListMarkup()}</div>`
     } else if (importWorkspaceView === 'add-more') {
       content = `<div class="wb3-ai-create-page"><div class="wb3-import-page-title"><div><h2>AI组题</h2><p>描述题量、知识点和难度，AI 会从飞象题库和我的题库中检索匹配。</p></div></div>${aiCreateInputBlockMarkup()}${aiComposeHistoryListMarkup()}</div>`
@@ -2068,7 +2100,7 @@
         : papers
       const previewPaper = previewKnowledgePaperId ? allKnowledgePapers().find((item) => item.id === previewKnowledgePaperId) : null
       const papersBody = previewPaper
-        ? `<div class="wb3-results-head wb3-paper-results-head"><button type="button" data-back-knowledge>返回题单列表</button><div><b>${escapeHtml(previewPaper.title)}</b><small>${escapeHtml(previewPaper.meta)}</small></div><button type="button" class="primary" data-import-knowledge-all="${previewPaper.id}">全部选用</button></div><div class="wb3-result-scroll wb3-import-question-list">${previewPaper.questions.map((question) => questionCardMarkup(question, addedMap)).join('')}</div>`
+        ? `${resultViewHeadMarkup({ backAttribute: 'data-back-knowledge', backLabel: '返回题单列表', title: previewPaper.title, description: `${previewPaper.meta} · 共 ${previewPaper.questions.length} 道题`, action: `<button type="button" class="primary" data-import-knowledge-all="${previewPaper.id}">全部选用</button>` })}<div class="wb3-result-scroll wb3-import-question-list">${previewPaper.questions.map((question) => questionCardMarkup(question, addedMap)).join('')}</div>`
         : !papers.length
           ? `<div class="wb3-result-scroll">${personalPapersEmptyMarkup()}</div>`
           : `<div class="wb3-paper-list-toolbar"><span>${paperQuery ? `找到 ${filteredPapers.length} 份题单` : `共 ${papers.length} 份题单`}</span><label class="wb3-paper-search">${icons.search}<input id="wb3PersonalPaperSearch" type="search" value="${escapeHtml(personalPaperSearchQuery)}" placeholder="搜索题单名称"></label></div><div class="wb3-result-scroll">${filteredPapers.length ? personalPapersListMarkup(filteredPapers) : '<div class="wb3-empty-results"><b>未找到相关题单</b><p>换个关键词试试。</p></div>'}</div>`
@@ -3383,7 +3415,26 @@
 
       const openComposeRecord = event.target.closest('[data-open-compose-record]')
       if (openComposeRecord) {
-        openWorkspaceTab(`compose:${openComposeRecord.dataset.openComposeRecord}`)
+        const record = aiComposeRecords.find((item) => item.id === openComposeRecord.dataset.openComposeRecord)
+        if (record?.status === 'completed') openAiComposeResult(record.id)
+        else openWorkspaceTab(`compose:${openComposeRecord.dataset.openComposeRecord}`)
+        return
+      }
+
+      const viewComposeResult = event.target.closest('[data-view-compose-result]')
+      if (viewComposeResult) {
+        openAiComposeResult(viewComposeResult.dataset.viewComposeResult)
+        return
+      }
+
+      if (event.target.closest('[data-close-compose-result]')) {
+        aiComposeResultViewId = ''
+        render()
+        window.requestAnimationFrame(() => {
+          const scroller = root?.querySelector('.wb3-import-center-body')
+          if (scroller) scroller.scrollTop = aiComposeReturnScrollTop
+          aiComposeReturnScrollTop = 0
+        })
         return
       }
 
@@ -3459,13 +3510,22 @@
 
       const previewKnowledge = event.target.closest('[data-preview-knowledge]')
       if (previewKnowledge) {
-        openWorkspaceTab(`paper:${previewKnowledge.dataset.previewKnowledge}`)
+        const paper = allKnowledgePapers().find((item) => item.id === previewKnowledge.dataset.previewKnowledge)
+        if (!paper) { showToast('未找到这份题单'); return }
+        personalPaperReturnScrollTop = root?.querySelector('.wb3-result-scroll')?.scrollTop || 0
+        previewKnowledgePaperId = paper.id
+        render()
         return
       }
 
       if (event.target.closest('[data-back-knowledge]')) {
         previewKnowledgePaperId = ''
         render()
+        window.requestAnimationFrame(() => {
+          const scroller = root?.querySelector('.wb3-result-scroll')
+          if (scroller) scroller.scrollTop = personalPaperReturnScrollTop
+          personalPaperReturnScrollTop = 0
+        })
         return
       }
 
@@ -4116,7 +4176,10 @@
       previewBankPaperId = ''
       activeImportRecordId = ''
       activeAiComposeRecordId = ''
+      aiComposeResultViewId = ''
+      aiComposeReturnScrollTop = 0
       previewKnowledgePaperId = ''
+      personalPaperReturnScrollTop = 0
       selectedPersonalQuestionIds = new Set()
       personalBatchMode = false
       aiRecordingDrawerOpen = false
@@ -4146,11 +4209,14 @@
       knowledgeModalOpen = false
       importWorkspaceView = 'library'
       activeAiComposeRecordId = ''
+      aiComposeResultViewId = ''
+      aiComposeReturnScrollTop = 0
       selectedPersonalQuestionIds = new Set()
       personalBatchMode = false
       aiRecordingDrawerOpen = false
       personalImportRecordViewId = ''
       personalImportReturnScrollTop = 0
+      personalPaperReturnScrollTop = 0
       personalTagEditorQuestionIds = []
       pendingPersonalTags = new Set()
       questionLabelEditorId = ''

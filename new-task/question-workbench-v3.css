@@ -151,15 +151,12 @@ body.fx-question-workbench-v3-open { overflow: hidden; }
 .wb3-results-filters .wb3-filter-search input { width: 100%; min-width: 0; padding: 0; border: 0; outline: 0; background: transparent; color: #31473d; font-size: 12px; }
 
 .wb3-import-workspace { gap: 12px; }
-.wb3-import-center-head { flex: none; display: flex; align-items: center; gap: 14px; padding: 10px 12px; border: 1px solid #e1e8e4; border-radius: 14px; background: #fff; }
-.wb3-import-center-head > button { height: 34px; display: inline-flex; align-items: center; gap: 5px; padding: 0 9px; border: 0; border-radius: 8px; background: transparent; color: #5f7168; font-size: 12px; }
-.wb3-import-center-head > button:hover { background: #f2f6f4; color: var(--wb3-green); }
-.wb3-import-center-head > button svg { width: 15px; }
-.wb3-import-breadcrumb { min-width: 0; display: flex; align-items: center; gap: 7px; color: #78877f; font-size: 12px; }
-.wb3-import-breadcrumb span { flex: none; }
+.wb3-import-center-head { min-width: 0; flex: none; height: 24px; display: flex; align-items: center; gap: 7px; padding: 0 4px; color: var(--wb3-muted); font-size: 12px; white-space: nowrap; }
+.wb3-import-center-head > button { height: auto; flex: none; padding: 0; border: 0; background: transparent; color: var(--wb3-muted); font: inherit; cursor: pointer; }
+.wb3-import-center-head > button:hover { color: var(--wb3-green); }
 .wb3-import-breadcrumb i { color: #b0bbb5; font-style: normal; }
-.wb3-import-breadcrumb b { flex: none; color: #2f4a3e; font-weight: 700; }
-.wb3-import-breadcrumb em { min-width: 0; overflow: hidden; color: #5f7168; font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
+.wb3-import-breadcrumb span { flex: none; }
+.wb3-import-breadcrumb b { min-width: 0; overflow: hidden; color: var(--wb3-ink); font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
 .wb3-import-center-nav { display: flex; align-items: center; gap: 4px; padding: 3px; border-radius: 9px; background: #f1f5f3; }
 .wb3-import-center-nav button { position: relative; height: 32px; padding: 0 14px; border: 0; border-radius: 7px; background: transparent; color: #687870; font-size: 12px; font-weight: 650; }
 .wb3-import-center-nav button.active { background: #fff; color: var(--wb3-green); box-shadow: 0 1px 4px rgba(27,64,48,.1); }
@@ -589,12 +586,19 @@ body.fx-question-workbench-v3-open { overflow: hidden; }
 .wb3-import-result-head { grid-column: 1 / -1; min-width: 0; display: flex; align-items: center; gap: 12px; }
 .wb3-import-result-head > button { height: 34px; flex: none; display: inline-flex; align-items: center; gap: 5px; padding: 0 10px; border: 1px solid var(--wb3-line); border-radius: 8px; background: #fff; color: var(--wb3-ink); font-size: 11px; font-weight: 650; white-space: nowrap; }
 .wb3-import-result-head > button:hover { border-color: var(--wb3-green); background: var(--wb3-soft); color: var(--wb3-green); }
+.wb3-import-result-head > button.primary { border-color: var(--wb3-green); background: var(--wb3-green); color: #fff; }
+.wb3-import-result-head > button.primary:hover { border-color: #176c47; background: #176c47; color: #fff; }
 .wb3-import-result-head > button:focus-visible { outline: 2px solid rgba(31,125,83,.2); outline-offset: 1px; }
 .wb3-import-result-head > button svg { width: 14px; height: 14px; }
 .wb3-import-result-head > div { min-width: 0; flex: 1; overflow: hidden; }
 .wb3-import-result-head b,.wb3-import-result-head > div > span { display: block; }
 .wb3-import-result-head b { overflow: hidden; color: var(--wb3-ink); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
 .wb3-import-result-head > div > span { margin-top: 3px; overflow: hidden; color: var(--wb3-muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.wb3-ai-compose-result-view { min-height: 100%; display: flex; flex-direction: column; }
+.wb3-ai-compose-result-view > .wb3-results-head { margin: -18px -18px 0; }
+.wb3-ai-compose-result-view > .wb3-result-scroll { min-height: 0; flex: 1; overflow: visible; padding: 16px 0 0; }
+.wb3-chat-result-link { width: fit-content; height: 32px; margin-top: 10px; padding: 0 11px; border: 1px solid var(--wb3-line); border-radius: 8px; background: #fff; color: var(--wb3-green); font-size: 11px; font-weight: 650; }
+.wb3-chat-result-link:hover { border-color: var(--wb3-green); background: var(--wb3-soft); }
 .wb3-main-search { height: 38px; display: flex; align-items: center; gap: 8px; min-width: 0; padding: 0 12px; border: 1px solid #dce5e0; border-radius: 9px; background: #f7f9f8; color: #85928c; }
 .wb3-main-search:focus-within { border-color: #8fbea8; background: #fff; box-shadow: 0 0 0 3px rgba(8,122,85,.06); }
 .wb3-main-search svg { width: 16px; flex: none; }
