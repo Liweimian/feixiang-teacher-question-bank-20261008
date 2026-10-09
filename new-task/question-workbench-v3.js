@@ -384,7 +384,11 @@
   let personalImportRecordViewId = ''
   let personalImportReturnScrollTop = 0
   let personalTagEditorQuestionIds = []
-  let pendingPersonalTags = new Set()
+  let bulkSetKnowledgeEnabled = false
+  let bulkSetCustomEnabled = false
+  let bulkKnowledgeValues = new Set()
+  let bulkCustomValues = new Set()
+  let bulkKnowledgeQuery = ''
   let questionLabelEditorId = ''
   let questionLabelEditorFocus = 'curriculum'
   let questionLabelDraft = null
@@ -1359,7 +1363,7 @@
   }
 
   function personalTagOptions() {
-    return [...new Set([...personalTagCatalog, ...personalQuestions.flatMap((question) => question.customTags || []), ...pendingPersonalTags])]
+    return [...new Set([...personalTagCatalog, ...personalQuestions.flatMap((question) => question.customTags || [])])]
   }
 
   function personalCurriculumOptions() {
@@ -2168,7 +2172,7 @@
       ? `<div class="wb3-import-result-head"><button type="button" data-close-import-result>${icons.back}<span>返回题目列表</span></button><div><b title="${escapeHtml(importResultRecord.filename)}">${escapeHtml(importResultRecord.filename)}</b><span>AI录题完成 · 共 ${questions.length} 道题 · 已自动添加题目标签</span></div></div>`
       : isLibraryTab
       ? `<div class="wb3-results-filters"><label><select id="wb3FilterType" aria-label="题型"><option value="全部题型" ${filterType === '全部题型' ? 'selected' : ''}>全部题型</option>${typeOptions.map((name) => `<option value="${escapeHtml(name)}" ${filterType === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label><select id="wb3FilterDifficulty" aria-label="难度"><option value="全部难度" ${filterDifficulty === '全部难度' ? 'selected' : ''}>全部难度</option>${difficultyOptions.map((name) => `<option ${filterDifficulty === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="wb3-filter-search"><span class="wb3-main-search">${icons.search}<input id="wb3TreeSearch" type="search" value="${escapeHtml(treeSearchQuery)}" placeholder="${browseByChapter ? '搜索教材章节或题干关键词' : '搜索知识点或题干关键词'}"></span></label></div>`
-      : `<div class="wb3-results-filters wb3-personal-filter-bar"><label class="wb3-personal-scope-filter ${personalCurriculumFilter !== 'all' ? 'is-active' : ''}"><select id="wb3PersonalCurriculumFilter" aria-label="阶段和科目"><option value="all">阶段·科目</option>${curriculumOptions.map((name) => `<option value="${escapeHtml(name)}" ${personalCurriculumFilter === name ? 'selected' : ''}>${escapeHtml(curriculumTagLabel(name))}</option>`).join('')}</select></label><label class="wb3-personal-type-filter ${filterType !== '全部题型' ? 'is-active' : ''}"><select id="wb3FilterType" aria-label="题型"><option value="全部题型" ${filterType === '全部题型' ? 'selected' : ''}>题型</option>${typeOptions.map((name) => `<option value="${escapeHtml(name)}" ${filterType === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="wb3-personal-difficulty-filter ${filterDifficulty !== '全部难度' ? 'is-active' : ''}"><select id="wb3FilterDifficulty" aria-label="难度"><option value="全部难度" ${filterDifficulty === '全部难度' ? 'selected' : ''}>难度</option>${difficultyOptions.map((name) => `<option ${filterDifficulty === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="wb3-personal-knowledge-filter ${personalKnowledgeFilter !== 'all' ? 'is-active' : ''}"><select id="wb3PersonalKnowledgeFilter" aria-label="知识点"><option value="all">知识点</option>${knowledgeOptions.map((name) => `<option value="${escapeHtml(name)}" ${personalKnowledgeFilter === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="wb3-personal-tag-filter ${selectedPersonalTag ? 'is-active' : ''}"><select id="wb3PersonalTagFilter" aria-label="自定义标签"><option value="">自定义标签</option>${personalTagOptions().map((tag) => `<option value="${escapeHtml(tag)}" ${selectedPersonalTag === tag ? 'selected' : ''}>${escapeHtml(tag)}（${personalCollectionCount(`tag:${tag}`)}）</option>`).join('')}</select></label><label class="wb3-filter-search"><span class="wb3-main-search">${icons.search}<input id="wb3TreeSearch" type="search" value="${escapeHtml(treeSearchQuery)}" placeholder="搜索题干或标签" aria-label="搜索题干或标签"></span></label>${hasPersonalFilters ? '<button type="button" class="wb3-filter-reset" data-clear-bank-filters>重置</button>' : ''}<button type="button" class="wb3-batch-mode-toggle ${personalBatchMode ? 'active' : ''}" data-toggle-personal-batch>${personalBatchMode ? '退出批量' : '批量管理'}</button></div>`
+      : `<div class="wb3-results-filters wb3-personal-filter-bar"><label class="wb3-personal-scope-filter ${personalCurriculumFilter !== 'all' ? 'is-active' : ''}"><select id="wb3PersonalCurriculumFilter" aria-label="阶段和科目"><option value="all">阶段·科目</option>${curriculumOptions.map((name) => `<option value="${escapeHtml(name)}" ${personalCurriculumFilter === name ? 'selected' : ''}>${escapeHtml(curriculumTagLabel(name))}</option>`).join('')}</select></label><label class="wb3-personal-type-filter ${filterType !== '全部题型' ? 'is-active' : ''}"><select id="wb3FilterType" aria-label="题型"><option value="全部题型" ${filterType === '全部题型' ? 'selected' : ''}>题型</option>${typeOptions.map((name) => `<option value="${escapeHtml(name)}" ${filterType === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="wb3-personal-difficulty-filter ${filterDifficulty !== '全部难度' ? 'is-active' : ''}"><select id="wb3FilterDifficulty" aria-label="难度"><option value="全部难度" ${filterDifficulty === '全部难度' ? 'selected' : ''}>难度</option>${difficultyOptions.map((name) => `<option ${filterDifficulty === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="wb3-personal-knowledge-filter ${personalKnowledgeFilter !== 'all' ? 'is-active' : ''}"><select id="wb3PersonalKnowledgeFilter" aria-label="知识点"><option value="all">知识点</option>${knowledgeOptions.map((name) => `<option value="${escapeHtml(name)}" ${personalKnowledgeFilter === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="wb3-personal-tag-filter ${selectedPersonalTag ? 'is-active' : ''}"><select id="wb3PersonalTagFilter" aria-label="自定义标签"><option value="">自定义标签</option>${personalTagOptions().map((tag) => `<option value="${escapeHtml(tag)}" ${selectedPersonalTag === tag ? 'selected' : ''}>${escapeHtml(tag)}（${personalCollectionCount(`tag:${tag}`)}）</option>`).join('')}</select></label><label class="wb3-filter-search"><span class="wb3-main-search">${icons.search}<input id="wb3TreeSearch" type="search" value="${escapeHtml(treeSearchQuery)}" placeholder="搜索题干或标签" aria-label="搜索题干或标签"></span></label>${hasPersonalFilters ? '<button type="button" class="wb3-filter-reset" data-clear-bank-filters>重置</button>' : ''}</div>`
     return `<section class="wb3-library">
       ${workspaceTabsMarkup()}
       ${personalSubtabs}
@@ -2178,7 +2182,7 @@
           <header class="wb3-results-head">
             ${filtersMarkup}
           </header>
-          ${personalBulkTagToolbarMarkup()}
+          ${personalBulkTagToolbarMarkup(questions.length, Boolean(importResultRecord))}
           ${importCompletionNoticeMarkup()}
           ${uploadParsing ? `<div class="wb3-upload-status"><i></i>AI 录题正在解析，完成后题目进入「我的题库」…</div>` : ''}
           <div class="wb3-result-scroll">${resultsBody}</div>${unlockPrompt}
@@ -2309,6 +2313,7 @@
   function renderPreservingResultScroll() {
     const scrollTop = root?.querySelector('.wb3-result-scroll')?.scrollTop || 0
     const labelEditorScrollTop = root?.querySelector('.wb3-question-label-editor-body')?.scrollTop || 0
+    const bulkLabelEditorScrollTop = root?.querySelector('.wb3-bulk-label-editor-body')?.scrollTop || 0
     const recordingDrawerScrollTop = root?.querySelector('.wb3-ai-recording-task-list')?.scrollTop || 0
     render()
     window.requestAnimationFrame(() => {
@@ -2316,6 +2321,8 @@
       if (scroller) scroller.scrollTop = scrollTop
       const labelEditorScroller = root?.querySelector('.wb3-question-label-editor-body')
       if (labelEditorScroller) labelEditorScroller.scrollTop = labelEditorScrollTop
+      const bulkLabelEditorScroller = root?.querySelector('.wb3-bulk-label-editor-body')
+      if (bulkLabelEditorScroller) bulkLabelEditorScroller.scrollTop = bulkLabelEditorScrollTop
       const recordingDrawerScroller = root?.querySelector('.wb3-ai-recording-task-list')
       if (recordingDrawerScroller) recordingDrawerScroller.scrollTop = recordingDrawerScrollTop
     })
@@ -2460,32 +2467,82 @@
     </section></div>`
   }
 
+  function resetBulkLabelEditorState() {
+    bulkSetKnowledgeEnabled = false
+    bulkSetCustomEnabled = false
+    bulkKnowledgeValues = new Set()
+    bulkCustomValues = new Set()
+    bulkKnowledgeQuery = ''
+  }
+
   function openPersonalTagEditor(questionIds) {
     personalTagEditorQuestionIds = [...new Set(questionIds)].filter((id) => personalQuestions.some((question) => question.id === id))
-    pendingPersonalTags = new Set()
+    resetBulkLabelEditorState()
     renderPreservingResultScroll()
-    window.requestAnimationFrame(() => $('#wb3NewPersonalTag', root)?.focus())
   }
 
   function closePersonalTagEditor() {
     personalTagEditorQuestionIds = []
-    pendingPersonalTags = new Set()
+    resetBulkLabelEditorState()
     renderPreservingResultScroll()
   }
 
+  function createBulkCustomTag() {
+    if (!bulkSetCustomEnabled) return
+    const input = $('#wb3NewPersonalTag', root)
+    const tag = (input?.value || '').trim().replace(/\s+/g, ' ')
+    if (!tag) { showToast('请输入标签名称'); input?.focus(); return }
+    if (bulkCustomValues.has(tag)) { showToast('该标签已选择'); input?.focus(); return }
+    bulkCustomValues.add(tag)
+    renderPreservingResultScroll()
+    window.requestAnimationFrame(() => $('#wb3NewPersonalTag', root)?.focus())
+  }
+
   function applyPersonalTags() {
-    const tags = [...pendingPersonalTags]
-    if (!personalTagEditorQuestionIds.length || !tags.length) return
+    if (!personalTagEditorQuestionIds.length) return
+    const hasEnabledScope = bulkSetKnowledgeEnabled || bulkSetCustomEnabled
+    const selectionValid = hasEnabledScope
+      && (!bulkSetKnowledgeEnabled || bulkKnowledgeValues.size > 0)
+      && (!bulkSetCustomEnabled || bulkCustomValues.size > 0)
+    if (!selectionValid) {
+      showToast(hasEnabledScope ? '请先选择要统一设置的标签' : '请先选择要设置的标签类型')
+      return
+    }
+    const knowledgeTags = [...bulkKnowledgeValues]
+    const customTags = [...bulkCustomValues]
+    const updatedKinds = []
+    if (bulkSetKnowledgeEnabled) updatedKinds.push('知识点')
+    if (bulkSetCustomEnabled) updatedKinds.push('自定义标签')
+    let syncedCanvas = false
     personalQuestions.forEach((question) => {
       if (!personalTagEditorQuestionIds.includes(question.id)) return
-      question.customTags = [...new Set([...(question.customTags || []), ...tags])]
+      if (bulkSetKnowledgeEnabled) {
+        question.knowledgeTags = [...knowledgeTags]
+        question.knowledge = knowledgeTags[0] || ''
+      }
+      if (bulkSetCustomEnabled) question.customTags = [...customTags]
+      question.labelsManuallyEdited = true
+      activeDraft.questions.forEach((item) => {
+        if (item.status !== 'confirmed' || item.sourceId !== question.id) return
+        if (bulkSetKnowledgeEnabled) {
+          item.knowledgeTags = [...knowledgeTags]
+          item.knowledge = knowledgeTags[0] || ''
+        }
+        if (bulkSetCustomEnabled) item.customTags = [...customTags]
+        item.labelsManuallyEdited = true
+        syncedCanvas = true
+      })
     })
-    personalTagCatalog = [...new Set([...personalTagCatalog, ...tags])]
+    if (bulkSetCustomEnabled) personalTagCatalog = [...new Set([...personalTagCatalog, ...customTags])]
     const count = personalTagEditorQuestionIds.length
     personalTagEditorQuestionIds = []
-    pendingPersonalTags = new Set()
+    resetBulkLabelEditorState()
+    if (syncedCanvas) persistDraft()
+    if (personalKnowledgeFilter !== 'all' && !personalKnowledgeOptions().includes(personalKnowledgeFilter)) personalKnowledgeFilter = 'all'
+    if (personalCollection.startsWith('tag:') && personalCollectionCount(personalCollection) === 0) personalCollection = 'all'
     renderPreservingResultScroll()
-    showToast(count > 1 ? `已为 ${count} 道题添加自定义标签` : '自定义标签已添加')
+    const summary = updatedKinds.join('和')
+    showToast(syncedCanvas ? `已统一设置 ${count} 道题的${summary}，并同步到当前题单` : `已统一设置 ${count} 道题的${summary}`)
   }
 
   function removePersonalTag(questionId, tag) {
@@ -2499,29 +2556,48 @@
   function personalTagEditorMarkup() {
     const targetQuestions = personalTagEditorQuestionIds.map((id) => personalQuestions.find((question) => question.id === id)).filter(Boolean)
     if (!targetQuestions.length) return ''
-    const options = personalTagOptions()
-    const optionMarkup = options.length
-      ? options.map((tag) => {
-        const assignedCount = targetQuestions.filter((question) => (question.customTags || []).includes(tag)).length
-        const assignedToAll = assignedCount === targetQuestions.length
-        const selected = pendingPersonalTags.has(tag)
-        const status = assignedToAll ? '<em>已添加</em>' : assignedCount ? '<em>部分已有</em>' : ''
-        return `<button type="button" class="${selected ? 'selected' : ''} ${assignedToAll ? 'assigned' : ''}" data-toggle-personal-tag="${escapeHtml(tag)}" ${assignedToAll ? 'disabled' : ''}><span>${escapeHtml(tag)}</span>${status}${selected ? icons.check : ''}</button>`
-      }).join('')
-      : '<p class="wb3-personal-tag-empty">还没有自定义标签，可在下方新建。</p>'
-    const countText = targetQuestions.length > 1 ? `已选择 ${targetQuestions.length} 道题` : '当前题目'
+    const targetCount = targetQuestions.length
+    const curriculumSignatures = new Set(targetQuestions.map((question) => questionCurriculumTags(question).slice().sort().join('|')))
+    const targetCurriculums = curriculumSignatures.size === 1 ? questionCurriculumTags(targetQuestions[0]) : []
+    const canSetKnowledge = curriculumSignatures.size === 1 && targetCurriculums.length > 0
+    const knowledgeOptions = knowledgeOptionsForCurriculums(targetCurriculums)
+    const query = bulkKnowledgeQuery.trim().toLowerCase()
+    const knowledgeMatches = query
+      ? knowledgeOptions.filter((tag) => tag.toLowerCase().includes(query) && !bulkKnowledgeValues.has(tag)).slice(0, 8)
+      : []
+    const availableCustomTags = personalTagOptions().filter((tag) => !bulkCustomValues.has(tag))
+    const selectedValueMarkup = (kind, values) => values.length
+      ? values.map((tag) => `<span class="wb3-bulk-overwrite-value">${escapeHtml(tag)}<button type="button" data-remove-bulk-value="${escapeHtml(tag)}" data-bulk-label-kind="${kind}" aria-label="移除${escapeHtml(tag)}">×</button></span>`).join('')
+      : '<p>暂未选择</p>'
+    const hasEnabledScope = bulkSetKnowledgeEnabled || bulkSetCustomEnabled
+    const selectionValid = hasEnabledScope
+      && (!bulkSetKnowledgeEnabled || bulkKnowledgeValues.size > 0)
+      && (!bulkSetCustomEnabled || bulkCustomValues.size > 0)
+    const enabledKinds = [bulkSetKnowledgeEnabled ? '知识点' : '', bulkSetCustomEnabled ? '自定义标签' : ''].filter(Boolean)
+    const footerText = selectionValid
+      ? `将统一覆盖所选题目的${enabledKinds.join('和')}`
+      : hasEnabledScope ? '请为已勾选的类型选择至少一个标签' : '请勾选要统一设置的标签类型；未勾选的保持不变'
     return `<div class="wb3-overlay wb3-personal-tag-overlay" data-personal-tag-overlay><section class="wb3-personal-tag-dialog" role="dialog" aria-modal="true" aria-labelledby="wb3PersonalTagTitle">
-      <header><span>${icons.tag}</span><div><h3 id="wb3PersonalTagTitle">批量添加自定义标签</h3><p>${countText}，可同时添加多个标签</p></div><button type="button" data-close-personal-tag aria-label="关闭">×</button></header>
-      <div class="wb3-personal-tag-options">${optionMarkup}</div>
-      <div class="wb3-personal-tag-create"><input id="wb3NewPersonalTag" maxlength="12" placeholder="输入自定义标签"><button type="button" data-create-personal-tag>新建并选中</button></div>
-      <footer><button type="button" data-close-personal-tag>取消</button><button type="button" class="primary" data-confirm-personal-tag ${pendingPersonalTags.size ? '' : 'disabled'}>添加自定义标签</button></footer>
+      <header><span>${icons.tag}</span><div><h3 id="wb3PersonalTagTitle">批量设置标签</h3><p>已选择 ${targetCount} 道题。仅勾选的标签类型会被统一设置，未勾选的保持不变。</p></div><button type="button" data-close-personal-tag aria-label="关闭">×</button></header>
+      <div class="wb3-bulk-label-editor-body">
+        <div class="wb3-bulk-overwrite-modes" role="group" aria-label="选择要设置的标签类型">
+          <label class="wb3-bulk-overwrite-card ${bulkSetKnowledgeEnabled ? 'active' : ''} ${canSetKnowledge ? '' : 'disabled'}"><input type="checkbox" data-bulk-label-scope="knowledge" ${bulkSetKnowledgeEnabled ? 'checked' : ''} ${canSetKnowledge ? '' : 'disabled'}><span><b>设置知识点</b><small>${canSetKnowledge ? '勾选后，统一覆盖所选题目的原知识点' : '所选题目阶段·科目不一致，请分批设置'}</small></span></label>
+          <label class="wb3-bulk-overwrite-card ${bulkSetCustomEnabled ? 'active' : ''}"><input type="checkbox" data-bulk-label-scope="custom" ${bulkSetCustomEnabled ? 'checked' : ''}><span><b>设置自定义标签</b><small>勾选后，统一覆盖所选题目的原自定义标签</small></span></label>
+        </div>
+        <div class="wb3-bulk-overwrite-fields">
+          ${bulkSetKnowledgeEnabled ? `<section class="wb3-bulk-overwrite-field"><header><div><b>选择知识点</b><span>可多选，仅使用飞象标签库</span></div><em>将覆盖原知识点</em></header><div class="wb3-bulk-overwrite-selected">${selectedValueMarkup('knowledge', [...bulkKnowledgeValues])}</div><label class="wb3-bulk-overwrite-search">${icons.search}<input id="wb3BulkKnowledgeSearch" value="${escapeHtml(bulkKnowledgeQuery)}" placeholder="搜索知识点" autocomplete="off"></label>${query ? `<div class="wb3-bulk-overwrite-options">${knowledgeMatches.length ? knowledgeMatches.map((tag) => `<button type="button" data-add-bulk-value="${escapeHtml(tag)}" data-bulk-label-kind="knowledge"><span>${escapeHtml(tag)}</span><em>选择</em></button>`).join('') : '<p>没有匹配的知识点</p>'}</div>` : '<small class="wb3-bulk-overwrite-hint">知识点较多，请输入关键词搜索后选择</small>'}${bulkKnowledgeValues.size ? '' : '<p class="wb3-bulk-overwrite-error">至少选择一个知识点后才能保存</p>'}</section>` : ''}
+          ${bulkSetCustomEnabled ? `<section class="wb3-bulk-overwrite-field"><header><div><b>选择自定义标签</b><span>可选择已有标签，也可自由创建</span></div><em>将覆盖原自定义标签</em></header><div class="wb3-bulk-overwrite-selected">${selectedValueMarkup('custom', [...bulkCustomValues])}</div><div class="wb3-bulk-overwrite-custom-options">${availableCustomTags.map((tag) => `<button type="button" data-add-bulk-value="${escapeHtml(tag)}" data-bulk-label-kind="custom">＋ ${escapeHtml(tag)}</button>`).join('')}<label class="wb3-custom-tag-compose"><span aria-hidden="true">${icons.plus}</span><input id="wb3NewPersonalTag" maxlength="12" placeholder="输入后回车新建" aria-label="新建自定义标签"></label></div>${bulkCustomValues.size ? '' : '<p class="wb3-bulk-overwrite-error">至少选择一个自定义标签后才能保存</p>'}</section>` : ''}
+        </div>
+      </div>
+      <footer><span>${footerText}</span><button type="button" data-close-personal-tag>取消</button><button type="button" class="primary" data-confirm-personal-tag ${selectionValid ? '' : 'disabled'}>保存</button></footer>
     </section></div>`
   }
 
-  function personalBulkTagToolbarMarkup() {
+  function personalBulkTagToolbarMarkup(resultCount = 0, inImportResult = false) {
     const count = [...selectedPersonalQuestionIds].filter((id) => personalQuestions.some((question) => question.id === id)).length
-    if (!personalBatchMode || questionSource !== 'personal' || importWorkspaceView !== 'library') return ''
-    return `<div class="wb3-personal-bulk-toolbar" role="toolbar" aria-label="批量管理题目"><span>${count ? `已选 <b>${count}</b> 道题` : '请选择要批量处理的题目'}</span><button type="button" data-clear-personal-selection ${count ? '' : 'disabled'}>清空选择</button><button type="button" class="primary" data-open-bulk-personal-tag ${count ? '' : 'disabled'}>${icons.tag}添加自定义标签</button></div>`
+    if (questionSource !== 'personal' || importWorkspaceView !== 'library' || personalLibraryMode !== 'questions' || inImportResult) return ''
+    if (!personalBatchMode) return `<div class="wb3-personal-bulk-toolbar wb3-personal-list-toolbar"><span>共 ${resultCount} 道题</span><button type="button" data-toggle-personal-batch ${resultCount ? '' : 'disabled'}>${icons.tag}批量操作</button></div>`
+    return `<div class="wb3-personal-bulk-toolbar active" role="toolbar" aria-label="批量操作题目"><span>${count ? `已选 <b>${count}</b> 道题` : '请选择要批量编辑标签的题目'}</span><button type="button" data-clear-personal-selection ${count ? '' : 'disabled'}>清空选择</button><button type="button" class="primary" data-open-bulk-personal-tag ${count ? '' : 'disabled'}>${icons.tag}批量编辑标签</button><button type="button" data-toggle-personal-batch>退出</button></div>`
   }
 
   function paperActionPromptMarkup() {
@@ -3125,31 +3201,27 @@
       }
 
       if (event.target.closest('[data-open-bulk-personal-tag]')) {
-        openPersonalTagEditor([...selectedPersonalQuestionIds])
+        const visibleIds = new Set(filterBankQuestions().map((question) => question.id))
+        openPersonalTagEditor([...selectedPersonalQuestionIds].filter((id) => visibleIds.has(id)))
         return
       }
 
-      const togglePersonalTag = event.target.closest('[data-toggle-personal-tag]')
-      if (togglePersonalTag && !togglePersonalTag.disabled) {
-        const tag = togglePersonalTag.dataset.togglePersonalTag
-        if (pendingPersonalTags.has(tag)) pendingPersonalTags.delete(tag)
-        else pendingPersonalTags.add(tag)
+      const addBulkValue = event.target.closest('[data-add-bulk-value]')
+      if (addBulkValue) {
+        const kind = addBulkValue.dataset.bulkLabelKind
+        const tag = addBulkValue.dataset.addBulkValue
+        const values = kind === 'knowledge' ? bulkKnowledgeValues : bulkCustomValues
+        values.add(tag)
+        if (kind === 'knowledge') bulkKnowledgeQuery = ''
         renderPreservingResultScroll()
         return
       }
 
-      if (event.target.closest('[data-create-personal-tag]')) {
-        const input = $('#wb3NewPersonalTag', root)
-        const tag = (input?.value || '').trim().replace(/\s+/g, ' ')
-        if (!tag) { showToast('请输入标签名称'); input?.focus(); return }
-        const targets = personalTagEditorQuestionIds.map((id) => personalQuestions.find((question) => question.id === id)).filter(Boolean)
-        if (targets.length && targets.every((question) => (question.customTags || []).includes(tag))) {
-          showToast('所选题目已添加该标签')
-          return
-        }
-        pendingPersonalTags.add(tag)
+      const removeBulkValue = event.target.closest('[data-remove-bulk-value]')
+      if (removeBulkValue) {
+        const values = removeBulkValue.dataset.bulkLabelKind === 'knowledge' ? bulkKnowledgeValues : bulkCustomValues
+        values.delete(removeBulkValue.dataset.removeBulkValue)
         renderPreservingResultScroll()
-        window.requestAnimationFrame(() => $('#wb3NewPersonalTag', root)?.focus())
         return
       }
 
@@ -3823,6 +3895,17 @@
     })
 
     root.addEventListener('input', (event) => {
+      if (event.target.id === 'wb3BulkKnowledgeSearch') {
+        bulkKnowledgeQuery = event.target.value
+        const caret = bulkKnowledgeQuery.length
+        renderPreservingResultScroll()
+        window.requestAnimationFrame(() => {
+          const input = $('#wb3BulkKnowledgeSearch', root)
+          input?.focus()
+          input?.setSelectionRange(caret, caret)
+        })
+        return
+      }
       if (event.target.matches('[data-question-label-dropdown-search]')) {
         questionLabelDropdownOpen = event.target.dataset.questionLabelDropdownSearch
         questionLabelDropdownQuery = event.target.value
@@ -3848,6 +3931,7 @@
       }
       if (event.target.id === 'wb3TreeSearch') {
         treeSearchQuery = event.target.value
+        if (questionSource === 'personal' && personalBatchMode) selectedPersonalQuestionIds = new Set()
         saveBankSearchToStorage()
         officialPage = 1
         const caret = treeSearchQuery.length
@@ -3859,8 +3943,20 @@
         })
         return
       }
-      if (event.target.id === 'wb3FilterType') { filterType = event.target.value; officialPage = 1; render(); return }
-      if (event.target.id === 'wb3FilterDifficulty') { filterDifficulty = event.target.value; officialPage = 1; render(); return }
+      if (event.target.id === 'wb3FilterType') {
+        filterType = event.target.value
+        if (questionSource === 'personal' && personalBatchMode) selectedPersonalQuestionIds = new Set()
+        officialPage = 1
+        render()
+        return
+      }
+      if (event.target.id === 'wb3FilterDifficulty') {
+        filterDifficulty = event.target.value
+        if (questionSource === 'personal' && personalBatchMode) selectedPersonalQuestionIds = new Set()
+        officialPage = 1
+        render()
+        return
+      }
       if (event.target.id === 'wb3PersonalCurriculumFilter') {
         personalCurriculumFilter = event.target.value
         personalKnowledgeFilter = 'all'
@@ -3896,7 +3992,7 @@
     root.addEventListener('keydown', (event) => {
       if (event.target.id === 'wb3NewPersonalTag' && event.key === 'Enter') {
         event.preventDefault()
-        root.querySelector('[data-create-personal-tag]')?.click()
+        createBulkCustomTag()
       }
       if (event.target.id === 'wb3NewQuestionCustomTag' && event.key === 'Enter') {
         event.preventDefault()
@@ -3905,6 +4001,11 @@
       if (event.key === 'Escape' && questionLabelEditorId) {
         event.preventDefault()
         closeQuestionLabelEditor()
+        return
+      }
+      if (event.key === 'Escape' && personalTagEditorQuestionIds.length) {
+        event.preventDefault()
+        closePersonalTagEditor()
         return
       }
       if (event.key === 'Escape' && aiRecordingDrawerOpen) {
@@ -3962,6 +4063,12 @@
     })
 
     root.addEventListener('change', (event) => {
+      if (event.target.matches('[data-bulk-label-scope]')) {
+        if (event.target.dataset.bulkLabelScope === 'knowledge') bulkSetKnowledgeEnabled = event.target.checked
+        else bulkSetCustomEnabled = event.target.checked
+        renderPreservingResultScroll()
+        return
+      }
       if (event.target.matches('[data-select-personal-question]')) {
         const id = event.target.dataset.selectPersonalQuestion
         if (event.target.checked) selectedPersonalQuestionIds.add(id)
@@ -4186,7 +4293,7 @@
       personalImportRecordViewId = ''
       personalImportReturnScrollTop = 0
       personalTagEditorQuestionIds = []
-      pendingPersonalTags = new Set()
+      resetBulkLabelEditorState()
       questionLabelEditorId = ''
       questionLabelEditorFocus = 'curriculum'
       questionLabelDraft = null
@@ -4218,7 +4325,7 @@
       personalImportReturnScrollTop = 0
       personalPaperReturnScrollTop = 0
       personalTagEditorQuestionIds = []
-      pendingPersonalTags = new Set()
+      resetBulkLabelEditorState()
       questionLabelEditorId = ''
       questionLabelEditorFocus = 'curriculum'
       questionLabelDraft = null
