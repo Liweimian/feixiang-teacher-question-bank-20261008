@@ -413,6 +413,7 @@
     }
   }
   let personalDeletePromptId = ''
+  let pendingPersonalTagDelete = ''
   let pendingPaperEditId = ''
   let pendingPaperDeleteId = ''
   let downloadDialogOpen = false
@@ -1380,6 +1381,16 @@
       .filter(Boolean))]
   }
 
+  function personalKnowledgeFilterLabel(name) {
+    const matchedQuestion = personalQuestions.find((question) => questionKnowledgeTags(question).includes(name))
+    const curriculum = personalCurriculumFilter !== 'all'
+      ? personalCurriculumFilter
+      : questionCurriculumTags(matchedQuestion || {})[0]
+    const catalog = curriculumCatalog[curriculum]
+    const parent = Object.entries(catalog?.parents || {}).find(([, children]) => children.includes(name))?.[0]
+    return [personalCurriculumFilter === 'all' ? curriculumTagLabel(curriculum) : '', parent, name].filter(Boolean).join(' / ')
+  }
+
   function personalPapersListMarkup(papers) {
     if (!papers.length) return personalPapersEmptyMarkup()
     return `<div class="wb3-bank-paper-list">${papers.map((paper) => `<article class="wb3-bank-paper-card"><span class="wb3-paper-card-icon">${icons.blank}</span><div><b>${escapeHtml(paper.title)}</b><small>${escapeHtml(paper.meta)}</small></div><div><button type="button" data-edit-knowledge-paper="${paper.id}">编辑</button><button type="button" data-preview-knowledge="${paper.id}">查看</button><button type="button" data-delete-knowledge-paper="${paper.id}">删除</button></div></article>`).join('')}</div>`
@@ -2174,11 +2185,16 @@
         return `<button type="button" class="${activeKnowledge === name ? 'active' : ''} ${isParent ? 'group' : ''} ${name.startsWith('☆') ? 'activity' : ''}" data-knowledge="${escapeHtml(name)}" data-tree-name="${escapeHtml(name.toLowerCase())}"><span>${icon}${escapeHtml(name)}</span></button>`
       }).join('') : ''}</div>
     </aside>`
+    const personalKnowledgeOptionMarkup = knowledgeOptions.map((name) => `<option value="${escapeHtml(name)}" ${personalKnowledgeFilter === name ? 'selected' : ''}>${escapeHtml(personalKnowledgeFilterLabel(name))}</option>`).join('')
+    const personalTagOptionsList = personalTagOptions()
+    const personalTagFilterMarkup = personalTagOptionsList.length
+      ? `<div class="wb3-personal-tag-filter-wrap"><label class="wb3-personal-tag-filter ${selectedPersonalTag ? 'is-active' : ''}"><select id="wb3PersonalTagFilter" aria-label="自定义标签"><option value="">自定义标签</option>${personalTagOptionsList.map((tag) => `<option value="${escapeHtml(tag)}" ${selectedPersonalTag === tag ? 'selected' : ''}>${escapeHtml(tag)}（${personalCollectionCount(`tag:${tag}`)}）</option>`).join('')}</select></label>${selectedPersonalTag ? `<button type="button" class="wb3-delete-personal-tag" data-delete-personal-tag="${escapeHtml(selectedPersonalTag)}" aria-label="删除自定义标签${escapeHtml(selectedPersonalTag)}" title="删除该自定义标签">${icons.trash}</button>` : ''}</div>`
+      : ''
     const filtersMarkup = importResultRecord
       ? `<div class="wb3-import-result-head"><button type="button" data-close-import-result>${icons.back}<span>返回题目列表</span></button><div><b title="${escapeHtml(importResultRecord.filename)}">${escapeHtml(importResultRecord.filename)}</b><span>AI录题完成 · 共 ${questions.length} 道题 · 已自动添加题目标签</span></div></div>`
       : isLibraryTab
       ? `<div class="wb3-results-filters"><label><select id="wb3FilterType" aria-label="题型"><option value="全部题型" ${filterType === '全部题型' ? 'selected' : ''}>全部题型</option>${typeOptions.map((name) => `<option value="${escapeHtml(name)}" ${filterType === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label><select id="wb3FilterDifficulty" aria-label="难度"><option value="全部难度" ${filterDifficulty === '全部难度' ? 'selected' : ''}>全部难度</option>${difficultyOptions.map((name) => `<option ${filterDifficulty === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="wb3-filter-search"><span class="wb3-main-search">${icons.search}<input id="wb3TreeSearch" type="search" value="${escapeHtml(treeSearchQuery)}" placeholder="${browseByChapter ? '搜索教材章节或题干关键词' : '搜索知识点或题干关键词'}"></span></label></div>`
-      : `<div class="wb3-results-filters wb3-personal-filter-bar"><label class="wb3-personal-scope-filter ${personalCurriculumFilter !== 'all' ? 'is-active' : ''}"><select id="wb3PersonalCurriculumFilter" aria-label="阶段和科目"><option value="all">阶段·科目</option>${curriculumOptions.map((name) => `<option value="${escapeHtml(name)}" ${personalCurriculumFilter === name ? 'selected' : ''}>${escapeHtml(curriculumTagLabel(name))}</option>`).join('')}</select></label><label class="wb3-personal-type-filter ${filterType !== '全部题型' ? 'is-active' : ''}"><select id="wb3FilterType" aria-label="题型"><option value="全部题型" ${filterType === '全部题型' ? 'selected' : ''}>题型</option>${typeOptions.map((name) => `<option value="${escapeHtml(name)}" ${filterType === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="wb3-personal-difficulty-filter ${filterDifficulty !== '全部难度' ? 'is-active' : ''}"><select id="wb3FilterDifficulty" aria-label="难度"><option value="全部难度" ${filterDifficulty === '全部难度' ? 'selected' : ''}>难度</option>${difficultyOptions.map((name) => `<option ${filterDifficulty === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="wb3-personal-knowledge-filter ${personalKnowledgeFilter !== 'all' ? 'is-active' : ''}"><select id="wb3PersonalKnowledgeFilter" aria-label="知识点"><option value="all">知识点</option>${knowledgeOptions.map((name) => `<option value="${escapeHtml(name)}" ${personalKnowledgeFilter === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="wb3-personal-tag-filter ${selectedPersonalTag ? 'is-active' : ''}"><select id="wb3PersonalTagFilter" aria-label="自定义标签"><option value="">自定义标签</option>${personalTagOptions().map((tag) => `<option value="${escapeHtml(tag)}" ${selectedPersonalTag === tag ? 'selected' : ''}>${escapeHtml(tag)}（${personalCollectionCount(`tag:${tag}`)}）</option>`).join('')}</select></label><label class="wb3-filter-search"><span class="wb3-main-search">${icons.search}<input id="wb3TreeSearch" type="search" value="${escapeHtml(treeSearchQuery)}" placeholder="搜索题干或标签" aria-label="搜索题干或标签"></span></label>${hasPersonalFilters ? '<button type="button" class="wb3-filter-reset" data-clear-bank-filters>重置</button>' : ''}</div>`
+      : `<div class="wb3-results-filters wb3-personal-filter-bar"><label class="wb3-personal-scope-filter ${personalCurriculumFilter !== 'all' ? 'is-active' : ''}"><select id="wb3PersonalCurriculumFilter" aria-label="阶段和科目"><option value="all">阶段·科目</option>${curriculumOptions.map((name) => `<option value="${escapeHtml(name)}" ${personalCurriculumFilter === name ? 'selected' : ''}>${escapeHtml(curriculumTagLabel(name))}</option>`).join('')}</select></label><label class="wb3-personal-type-filter ${filterType !== '全部题型' ? 'is-active' : ''}"><select id="wb3FilterType" aria-label="题型"><option value="全部题型" ${filterType === '全部题型' ? 'selected' : ''}>题型</option>${typeOptions.map((name) => `<option value="${escapeHtml(name)}" ${filterType === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="wb3-personal-difficulty-filter ${filterDifficulty !== '全部难度' ? 'is-active' : ''}"><select id="wb3FilterDifficulty" aria-label="难度"><option value="全部难度" ${filterDifficulty === '全部难度' ? 'selected' : ''}>难度</option>${difficultyOptions.map((name) => `<option ${filterDifficulty === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="wb3-personal-knowledge-filter ${personalKnowledgeFilter !== 'all' ? 'is-active' : ''}"><select id="wb3PersonalKnowledgeFilter" aria-label="知识点"><option value="all">知识点</option>${personalKnowledgeOptionMarkup}</select></label>${personalTagFilterMarkup}<label class="wb3-filter-search"><span class="wb3-main-search">${icons.search}<input id="wb3TreeSearch" type="search" value="${escapeHtml(treeSearchQuery)}" placeholder="搜索题干或标签" aria-label="搜索题干或标签"></span></label>${hasPersonalFilters ? '<button type="button" class="wb3-filter-reset" data-clear-bank-filters>重置</button>' : ''}</div>`
     return `<section class="wb3-library">
       ${workspaceTabsMarkup()}
       ${personalSubtabs}
@@ -2314,6 +2330,30 @@
       ? '该题已加入右侧当前题单，确认删除后将从<strong>我的题库与当前画布</strong>中一并移除。'
       : '删除后无法再从「我的题库」选用。'
     return `<div class="wb3-overlay" data-personal-delete-overlay><div class="wb3-unlock-dialog wb3-confirm-dialog" role="dialog" aria-labelledby="wb3PersonalDeleteTitle"><span>${icons.trash}</span><h3 id="wb3PersonalDeleteTitle">从我的题库删除？</h3><p>${hint}</p><div><button type="button" data-personal-delete-cancel>取消</button><button type="button" class="primary danger" data-personal-delete-confirm>确认删除</button></div></div></div>`
+  }
+
+  function personalTagDeletePromptMarkup() {
+    if (!pendingPersonalTagDelete) return ''
+    const affectedCount = personalCollectionCount(`tag:${pendingPersonalTagDelete}`)
+    return `<div class="wb3-overlay" data-personal-tag-delete-overlay><div class="wb3-unlock-dialog wb3-confirm-dialog" role="dialog" aria-labelledby="wb3PersonalTagDeleteTitle"><span>${icons.trash}</span><h3 id="wb3PersonalTagDeleteTitle">删除自定义标签？</h3><p>删除“${escapeHtml(pendingPersonalTagDelete)}”后，将同时从关联的 ${affectedCount} 道题目中移除该标签。</p><div><button type="button" data-personal-tag-delete-cancel>取消</button><button type="button" class="primary danger" data-personal-tag-delete-confirm>确认删除</button></div></div></div>`
+  }
+
+  function deletePersonalTagGlobally(tag) {
+    if (!tag) return
+    personalQuestions.forEach((question) => {
+      question.customTags = (question.customTags || []).filter((item) => item !== tag)
+    })
+    ;(activeDraft?.questions || []).forEach((question) => {
+      if (question.status === 'confirmed' && question.sourceId) question.customTags = (question.customTags || []).filter((item) => item !== tag)
+    })
+    personalTagCatalog = personalTagCatalog.filter((item) => item !== tag)
+    if (personalCollection === `tag:${tag}`) personalCollection = 'all'
+    if (questionLabelDraft) questionLabelDraft.customTags = (questionLabelDraft.customTags || []).filter((item) => item !== tag)
+    bulkCustomValues.delete(tag)
+    pendingPersonalTagDelete = ''
+    persistDraft()
+    render()
+    showToast(`已删除自定义标签“${tag}”`)
   }
 
   function renderPreservingResultScroll() {
@@ -2693,6 +2733,7 @@
     ${questionLabelEditorMarkup()}
     ${personalTagEditorMarkup()}
     ${personalDeletePromptMarkup()}
+    ${personalTagDeletePromptMarkup()}
     ${paperActionPromptMarkup()}
     ${saveBeforeNewDialogMarkup()}
     ${downloadDialogMarkup()}
@@ -3127,6 +3168,22 @@
         personalBatchMode = !personalBatchMode
         selectedPersonalQuestionIds = new Set()
         renderPreservingResultScroll()
+        return
+      }
+
+      const deletePersonalTag = event.target.closest('[data-delete-personal-tag]')
+      if (deletePersonalTag) {
+        pendingPersonalTagDelete = deletePersonalTag.dataset.deletePersonalTag
+        render()
+        return
+      }
+      if (event.target.closest('[data-personal-tag-delete-confirm]')) {
+        deletePersonalTagGlobally(pendingPersonalTagDelete)
+        return
+      }
+      if (event.target.closest('[data-personal-tag-delete-cancel]') || (event.target.closest('[data-personal-tag-delete-overlay]') && !event.target.closest('.wb3-confirm-dialog'))) {
+        pendingPersonalTagDelete = ''
+        render()
         return
       }
 
@@ -4300,6 +4357,7 @@
       personalImportRecordViewId = ''
       personalImportReturnScrollTop = 0
       personalTagEditorQuestionIds = []
+      pendingPersonalTagDelete = ''
       resetBulkLabelEditorState()
       questionLabelEditorId = ''
       questionLabelEditorFocus = 'curriculum'
@@ -4332,6 +4390,7 @@
       personalImportReturnScrollTop = 0
       personalPaperReturnScrollTop = 0
       personalTagEditorQuestionIds = []
+      pendingPersonalTagDelete = ''
       resetBulkLabelEditorState()
       questionLabelEditorId = ''
       questionLabelEditorFocus = 'curriculum'

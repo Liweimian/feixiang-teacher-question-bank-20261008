@@ -612,6 +612,11 @@ body.fx-question-workbench-v3-open { overflow: hidden; }
 .wb3-personal-filter-bar .wb3-personal-type-filter select { width: 84px; min-width: 84px; }
 .wb3-personal-filter-bar .wb3-personal-difficulty-filter select { width: 84px; min-width: 84px; }
 .wb3-personal-filter-bar .wb3-personal-tag-filter select { width: 116px; min-width: 116px; }
+.wb3-personal-tag-filter-wrap { display:flex; align-items:center; gap:4px; }
+.wb3-delete-personal-tag { width:34px; height:34px; flex:none; display:grid; place-items:center; padding:0; border:1px solid var(--wb3-line); border-radius:8px; background:#fff; color:#a0645b; cursor:pointer; }
+.wb3-delete-personal-tag:hover { border-color:#d6aaa3; background:#fff6f4; color:#9d4338; }
+.wb3-delete-personal-tag:focus-visible { outline:2px solid rgba(31,125,83,.2); outline-offset:1px; }
+.wb3-delete-personal-tag svg { width:15px; height:15px; }
 .wb3-personal-filter-bar label.is-active select { border-color: #91bda8; background-color: #eef8f3; color: var(--wb3-green); font-weight: 650; }
 .wb3-filter-reset { height: 34px; flex: none; padding: 0 8px; border: 0; border-radius: 7px; background: transparent; color: var(--wb3-green); font-size: 12px; font-weight: 650; white-space: nowrap; cursor: pointer; }
 .wb3-filter-reset:hover { background: #edf6f1; }
