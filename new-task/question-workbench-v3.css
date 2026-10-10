@@ -610,13 +610,20 @@ body.fx-question-workbench-v3-open { overflow: hidden; }
 .wb3-personal-filter-bar .wb3-personal-scope-filter select { width: 124px; min-width: 124px; }
 .wb3-personal-filter-bar .wb3-personal-knowledge-filter select { width: 108px; min-width: 108px; }
 .wb3-personal-filter-bar .wb3-personal-type-filter select { width: 84px; min-width: 84px; }
-.wb3-personal-filter-bar .wb3-personal-difficulty-filter select { width: 84px; min-width: 84px; }
+.wb3-personal-difficulty-filter { position: relative; flex: none; }
+.wb3-personal-difficulty-filter > button { width: 96px; height: 34px; display: flex; align-items: center; gap: 6px; padding: 0 9px; border: 1px solid #dce5e0; border-radius: 8px; background: #f8faf9; color: #40554b; font-size: 12px; cursor: pointer; }
+.wb3-personal-difficulty-filter > button > span { min-width: 0; flex: 1; overflow: hidden; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
+.wb3-personal-difficulty-filter > button > i { flex: none; color: var(--wb3-muted); font-size: 13px; font-style: normal; transition: transform .15s ease; }
+.wb3-personal-difficulty-filter > button[aria-expanded="true"] > i { transform: rotate(180deg); }
+.wb3-personal-difficulty-filter.is-active > button { border-color: #91bda8; background: #eef8f3; color: var(--wb3-green); font-weight: 650; }
+.wb3-personal-difficulty-filter > button:focus-visible { outline: 2px solid rgba(31,125,83,.2); outline-offset: 1px; }
+.wb3-personal-difficulty-menu { position: absolute; z-index: 24; top: calc(100% + 5px); left: 0; width: 150px; display: grid; gap: 3px; padding: 6px; border: 1px solid var(--wb3-line); border-radius: 8px; background: #fff; box-shadow: 0 8px 22px rgba(7,49,35,.16); }
+.wb3-personal-difficulty-menu > button { min-height: 31px; display: flex; align-items: center; gap: 8px; padding: 0 8px; border: 0; border-radius: 6px; background: transparent; color: var(--wb3-ink); font-size: 11px; text-align: left; cursor: pointer; }
+.wb3-personal-difficulty-menu > button:hover,.wb3-personal-difficulty-menu > button.selected { background: var(--wb3-soft); color: var(--wb3-green); }
+.wb3-personal-difficulty-menu > button > span { min-width: 0; flex: 1; }
+.wb3-personal-difficulty-menu > button svg { width: 13px; height: 13px; flex: none; }
 .wb3-personal-filter-bar .wb3-personal-tag-filter select { width: 116px; min-width: 116px; }
-.wb3-personal-tag-filter-wrap { display:flex; align-items:center; gap:4px; }
-.wb3-delete-personal-tag { width:34px; height:34px; flex:none; display:grid; place-items:center; padding:0; border:1px solid var(--wb3-line); border-radius:8px; background:#fff; color:#a0645b; cursor:pointer; }
-.wb3-delete-personal-tag:hover { border-color:#d6aaa3; background:#fff6f4; color:#9d4338; }
-.wb3-delete-personal-tag:focus-visible { outline:2px solid rgba(31,125,83,.2); outline-offset:1px; }
-.wb3-delete-personal-tag svg { width:15px; height:15px; }
+.wb3-personal-tag-filter-wrap { display:flex; align-items:center; }
 .wb3-personal-filter-bar label.is-active select { border-color: #91bda8; background-color: #eef8f3; color: var(--wb3-green); font-weight: 650; }
 .wb3-filter-reset { height: 34px; flex: none; padding: 0 8px; border: 0; border-radius: 7px; background: transparent; color: var(--wb3-green); font-size: 12px; font-weight: 650; white-space: nowrap; cursor: pointer; }
 .wb3-filter-reset:hover { background: #edf6f1; }
@@ -716,6 +723,21 @@ body.fx-question-workbench-v3-open { overflow: hidden; }
 .wb3-personal-tag-dialog > footer button { height: 34px; flex: none; padding: 0 15px; border: 1px solid var(--wb3-line); border-radius: 8px; background: #fff; color: var(--wb3-ink); font-size: 11px; }
 .wb3-personal-tag-dialog > footer button.primary { border-color: var(--wb3-green); background: var(--wb3-green); color: #fff; }
 .wb3-personal-tag-dialog > footer button:disabled { cursor: not-allowed; opacity: .45; }
+.wb3-personal-tag-manager-dialog { width: min(500px, 100%); }
+.wb3-personal-tag-manager-body { min-height: 190px; max-height: min(52vh, 420px); overflow: auto; padding: 10px 20px 18px; }
+.wb3-personal-tag-manager-body ul { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.wb3-personal-tag-manager-body li { min-width: 0; display: flex; align-items: center; gap: 12px; padding: 11px 4px; border-bottom: 1px solid var(--wb3-line); }
+.wb3-personal-tag-manager-body li:last-child { border-bottom: 0; }
+.wb3-personal-tag-manager-body li > div { min-width: 0; flex: 1; display: grid; gap: 3px; }
+.wb3-personal-tag-manager-body li b { overflow: hidden; color: var(--wb3-ink); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.wb3-personal-tag-manager-body li div span { color: var(--wb3-muted); font-size: 10px; }
+.wb3-personal-tag-manager-body li > button { height: 30px; flex: none; display: inline-flex; align-items: center; gap: 5px; padding: 0 9px; border: 1px solid #e3c7c2; border-radius: 7px; background: #fff; color: #a0645b; font-size: 10px; cursor: pointer; }
+.wb3-personal-tag-manager-body li > button:hover { border-color: #d6aaa3; background: #fff6f4; color: #9d4338; }
+.wb3-personal-tag-manager-body li > button:focus-visible { outline: 2px solid rgba(31,125,83,.2); outline-offset: 1px; }
+.wb3-personal-tag-manager-body li > button svg { width: 13px; height: 13px; }
+.wb3-personal-tag-manager-empty { min-height: 160px; display: grid; place-content: center; gap: 5px; color: var(--wb3-muted); text-align: center; }
+.wb3-personal-tag-manager-empty b { color: var(--wb3-ink); font-size: 13px; }
+.wb3-personal-tag-manager-empty p { max-width: 280px; font-size: 10px; line-height: 1.5; }
 .wb3-bulk-label-editor-body { min-height: 0; display: grid; gap: 14px; overflow: auto; padding: 16px 20px 18px; }
 .wb3-bulk-overwrite-modes { min-width: 0; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
 .wb3-bulk-overwrite-card { min-width: 0; min-height: 78px; display: grid; grid-template-columns: 18px minmax(0,1fr); align-items: start; gap: 9px; padding: 12px; border: 1px solid var(--wb3-line); border-radius: 10px; background: #fff; cursor: pointer; transition: .15s ease; }

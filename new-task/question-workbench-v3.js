@@ -361,6 +361,8 @@
   let activeKnowledge = '全部知识点'
   let filterType = '全部题型'
   let filterDifficulty = '全部难度'
+  let personalDifficultyFilters = new Set()
+  let personalDifficultyFilterOpen = false
   let selectedQuestionId = ''
   let answerEditorQuestionId = ''
   let revealedAnswerIds = new Set()
@@ -413,6 +415,7 @@
     }
   }
   let personalDeletePromptId = ''
+  let personalTagManagerOpen = false
   let pendingPersonalTagDelete = ''
   let pendingPaperEditId = ''
   let pendingPaperDeleteId = ''
@@ -1302,6 +1305,7 @@
     questionSource = source === 'personal' ? 'personal' : 'official'
     selectedPersonalQuestionIds = new Set()
     personalBatchMode = false
+    personalDifficultyFilterOpen = false
     if (questionSource === 'official') {
       previewBankPaperId = ''
       previewKnowledgePaperId = ''
@@ -1485,7 +1489,9 @@
           || Object.entries(tree.parents).some(([parent, children]) => parent.toLowerCase().includes(treeQuery) && children.includes(question.knowledge))
         : questionMatchesTreeNode(question, activeKnowledge, tree)
       const typeMatch = filterType === '全部题型' || (questionSource === 'personal' ? questionTypeTags(question).includes(filterType) : question.type === filterType)
-      const difficultyMatch = filterDifficulty === '全部难度' || (questionSource === 'personal' ? questionDifficultyTags(question).includes(filterDifficulty) : question.difficulty === filterDifficulty)
+      const difficultyMatch = questionSource === 'personal'
+        ? !personalDifficultyFilters.size || questionDifficultyTags(question).some((difficulty) => personalDifficultyFilters.has(difficulty))
+        : filterDifficulty === '全部难度' || question.difficulty === filterDifficulty
       const curriculumMatch = questionSource !== 'personal' || personalCurriculumFilter === 'all' || questionCurriculumTags(question).includes(personalCurriculumFilter)
       const knowledgeMatch = questionSource !== 'personal' || personalKnowledgeFilter === 'all' || questionKnowledgeTags(question).includes(personalKnowledgeFilter)
       return scopeMatch && curriculumMatch && knowledgeMatch && typeMatch && difficultyMatch
@@ -2154,7 +2160,7 @@
       personalCurriculumFilter !== 'all' ||
       personalKnowledgeFilter !== 'all' ||
       filterType !== '全部题型' ||
-      filterDifficulty !== '全部难度' ||
+      personalDifficultyFilters.size > 0 ||
       personalCollection !== 'all' ||
       Boolean(treeSearchQuery.trim())
     )
@@ -2183,15 +2189,17 @@
       }).join('') : ''}</div>
     </aside>`
     const personalKnowledgeOptionMarkup = knowledgeOptions.map((name) => `<option value="${escapeHtml(name)}" ${personalKnowledgeFilter === name ? 'selected' : ''}>${escapeHtml(personalKnowledgeFilterLabel(name))}</option>`).join('')
+    const personalDifficultySummary = personalDifficultyFilters.size ? [...personalDifficultyFilters].join('、') : '难度'
+    const personalDifficultyFilterMarkup = `<div class="wb3-personal-difficulty-filter ${personalDifficultyFilters.size ? 'is-active' : ''}"><button type="button" data-toggle-personal-difficulty-filter aria-haspopup="listbox" aria-expanded="${personalDifficultyFilterOpen}" title="${escapeHtml(personalDifficultySummary)}"><span>${escapeHtml(personalDifficultySummary)}</span><i aria-hidden="true">⌄</i></button>${personalDifficultyFilterOpen ? `<div class="wb3-personal-difficulty-menu" role="listbox" aria-label="筛选难度" aria-multiselectable="true">${difficultyOptions.map((name) => { const selected = personalDifficultyFilters.has(name); return `<button type="button" class="${selected ? 'selected' : ''}" data-toggle-personal-difficulty="${escapeHtml(name)}" role="option" aria-selected="${selected}"><span>${escapeHtml(name)}</span>${selected ? icons.check : ''}</button>` }).join('')}</div>` : ''}</div>`
     const personalTagOptionsList = personalTagOptions()
     const personalTagFilterMarkup = personalTagOptionsList.length
-      ? `<div class="wb3-personal-tag-filter-wrap"><label class="wb3-personal-tag-filter ${selectedPersonalTag ? 'is-active' : ''}"><select id="wb3PersonalTagFilter" aria-label="自定义标签"><option value="">自定义标签</option>${personalTagOptionsList.map((tag) => `<option value="${escapeHtml(tag)}" ${selectedPersonalTag === tag ? 'selected' : ''}>${escapeHtml(tag)}（${personalCollectionCount(`tag:${tag}`)}）</option>`).join('')}</select></label>${selectedPersonalTag ? `<button type="button" class="wb3-delete-personal-tag" data-delete-personal-tag="${escapeHtml(selectedPersonalTag)}" aria-label="删除自定义标签${escapeHtml(selectedPersonalTag)}" title="删除该自定义标签">${icons.trash}</button>` : ''}</div>`
+      ? `<div class="wb3-personal-tag-filter-wrap"><label class="wb3-personal-tag-filter ${selectedPersonalTag ? 'is-active' : ''}"><select id="wb3PersonalTagFilter" aria-label="自定义标签"><option value="">自定义标签</option>${personalTagOptionsList.map((tag) => `<option value="${escapeHtml(tag)}" ${selectedPersonalTag === tag ? 'selected' : ''}>${escapeHtml(tag)}（${personalCollectionCount(`tag:${tag}`)}）</option>`).join('')}<option value="__manage__">管理自定义标签…</option></select></label></div>`
       : ''
     const filtersMarkup = importResultRecord
       ? `<div class="wb3-import-result-head"><button type="button" data-close-import-result>${icons.back}<span>返回题目列表</span></button><div><b title="${escapeHtml(importResultRecord.filename)}">${escapeHtml(importResultRecord.filename)}</b><span>AI录题完成 · 共 ${questions.length} 道题 · 已自动添加题目标签</span></div></div>`
       : isLibraryTab
       ? `<div class="wb3-results-filters"><label><select id="wb3FilterType" aria-label="题型"><option value="全部题型" ${filterType === '全部题型' ? 'selected' : ''}>全部题型</option>${typeOptions.map((name) => `<option value="${escapeHtml(name)}" ${filterType === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label><select id="wb3FilterDifficulty" aria-label="难度"><option value="全部难度" ${filterDifficulty === '全部难度' ? 'selected' : ''}>全部难度</option>${difficultyOptions.map((name) => `<option ${filterDifficulty === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="wb3-filter-search"><span class="wb3-main-search">${icons.search}<input id="wb3TreeSearch" type="search" value="${escapeHtml(treeSearchQuery)}" placeholder="${browseByChapter ? '搜索教材章节或题干关键词' : '搜索知识点或题干关键词'}"></span></label></div>`
-      : `<div class="wb3-results-filters wb3-personal-filter-bar"><label class="wb3-personal-scope-filter ${personalCurriculumFilter !== 'all' ? 'is-active' : ''}"><select id="wb3PersonalCurriculumFilter" aria-label="阶段和科目"><option value="all">阶段·科目</option>${curriculumOptions.map((name) => `<option value="${escapeHtml(name)}" ${personalCurriculumFilter === name ? 'selected' : ''}>${escapeHtml(curriculumTagLabel(name))}</option>`).join('')}</select></label><label class="wb3-personal-type-filter ${filterType !== '全部题型' ? 'is-active' : ''}"><select id="wb3FilterType" aria-label="题型"><option value="全部题型" ${filterType === '全部题型' ? 'selected' : ''}>题型</option>${typeOptions.map((name) => `<option value="${escapeHtml(name)}" ${filterType === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="wb3-personal-difficulty-filter ${filterDifficulty !== '全部难度' ? 'is-active' : ''}"><select id="wb3FilterDifficulty" aria-label="难度"><option value="全部难度" ${filterDifficulty === '全部难度' ? 'selected' : ''}>难度</option>${difficultyOptions.map((name) => `<option ${filterDifficulty === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="wb3-personal-knowledge-filter ${personalKnowledgeFilter !== 'all' ? 'is-active' : ''}" title="${personalCurriculumFilter === 'all' ? '请先选择阶段·科目' : ''}"><select id="wb3PersonalKnowledgeFilter" aria-label="知识点" ${personalCurriculumFilter === 'all' ? 'disabled' : ''}><option value="all">知识点</option>${personalKnowledgeOptionMarkup}</select></label>${personalTagFilterMarkup}<label class="wb3-filter-search"><span class="wb3-main-search">${icons.search}<input id="wb3TreeSearch" type="search" value="${escapeHtml(treeSearchQuery)}" placeholder="搜索题干或标签" aria-label="搜索题干或标签"></span></label>${hasPersonalFilters ? '<button type="button" class="wb3-filter-reset" data-clear-bank-filters>重置</button>' : ''}</div>`
+      : `<div class="wb3-results-filters wb3-personal-filter-bar"><label class="wb3-personal-scope-filter ${personalCurriculumFilter !== 'all' ? 'is-active' : ''}"><select id="wb3PersonalCurriculumFilter" aria-label="阶段和科目"><option value="all">阶段·科目</option>${curriculumOptions.map((name) => `<option value="${escapeHtml(name)}" ${personalCurriculumFilter === name ? 'selected' : ''}>${escapeHtml(curriculumTagLabel(name))}</option>`).join('')}</select></label><label class="wb3-personal-type-filter ${filterType !== '全部题型' ? 'is-active' : ''}"><select id="wb3FilterType" aria-label="题型"><option value="全部题型" ${filterType === '全部题型' ? 'selected' : ''}>题型</option>${typeOptions.map((name) => `<option value="${escapeHtml(name)}" ${filterType === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label>${personalDifficultyFilterMarkup}<label class="wb3-personal-knowledge-filter ${personalKnowledgeFilter !== 'all' ? 'is-active' : ''}" title="${personalCurriculumFilter === 'all' ? '请先选择阶段·科目' : ''}"><select id="wb3PersonalKnowledgeFilter" aria-label="知识点" ${personalCurriculumFilter === 'all' ? 'disabled' : ''}><option value="all">知识点</option>${personalKnowledgeOptionMarkup}</select></label>${personalTagFilterMarkup}<label class="wb3-filter-search"><span class="wb3-main-search">${icons.search}<input id="wb3TreeSearch" type="search" value="${escapeHtml(treeSearchQuery)}" placeholder="搜索题干或标签" aria-label="搜索题干或标签"></span></label>${hasPersonalFilters ? '<button type="button" class="wb3-filter-reset" data-clear-bank-filters>重置</button>' : ''}</div>`
     return `<section class="wb3-library">
       ${workspaceTabsMarkup()}
       ${personalSubtabs}
@@ -2332,16 +2340,31 @@
   function personalTagDeletePromptMarkup() {
     if (!pendingPersonalTagDelete) return ''
     const affectedCount = personalCollectionCount(`tag:${pendingPersonalTagDelete}`)
-    return `<div class="wb3-overlay" data-personal-tag-delete-overlay><div class="wb3-unlock-dialog wb3-confirm-dialog" role="dialog" aria-labelledby="wb3PersonalTagDeleteTitle"><span>${icons.trash}</span><h3 id="wb3PersonalTagDeleteTitle">删除自定义标签？</h3><p>删除“${escapeHtml(pendingPersonalTagDelete)}”后，将同时从关联的 ${affectedCount} 道题目中移除该标签。</p><div><button type="button" data-personal-tag-delete-cancel>取消</button><button type="button" class="primary danger" data-personal-tag-delete-confirm>确认删除</button></div></div></div>`
+    return `<div class="wb3-overlay" data-personal-tag-delete-overlay><div class="wb3-unlock-dialog wb3-confirm-dialog" role="dialog" aria-labelledby="wb3PersonalTagDeleteTitle"><span>${icons.trash}</span><h3 id="wb3PersonalTagDeleteTitle">删除自定义标签？</h3><p>删除“${escapeHtml(pendingPersonalTagDelete)}”后，该标签会从标签列表消失，并从关联的 ${affectedCount} 道题目及当前题单同源题中移除。</p><div><button type="button" data-personal-tag-delete-cancel>取消</button><button type="button" class="primary danger" data-personal-tag-delete-confirm>确认删除</button></div></div></div>`
+  }
+
+  function personalTagManagerMarkup() {
+    if (!personalTagManagerOpen) return ''
+    const tags = personalTagOptions()
+    const rows = tags.map((tag) => {
+      const count = personalCollectionCount(`tag:${tag}`)
+      return `<li><div><b>${escapeHtml(tag)}</b><span>已关联 ${count} 道题目</span></div><button type="button" data-delete-personal-tag="${escapeHtml(tag)}" aria-label="删除自定义标签${escapeHtml(tag)}">${icons.trash}<span>删除</span></button></li>`
+    }).join('')
+    return `<div class="wb3-overlay wb3-personal-tag-manager-overlay" data-personal-tag-manager-overlay><section class="wb3-personal-tag-dialog wb3-personal-tag-manager-dialog" role="dialog" aria-modal="true" aria-labelledby="wb3PersonalTagManagerTitle">
+      <header><span>${icons.tag}</span><div><h3 id="wb3PersonalTagManagerTitle">管理自定义标签</h3><p>在这里统一管理标签；单题编辑只调整当前题目的关联</p></div><button type="button" data-close-personal-tag-manager aria-label="关闭">×</button></header>
+      <div class="wb3-personal-tag-manager-body">${rows ? `<ul>${rows}</ul>` : `<div class="wb3-personal-tag-manager-empty"><b>暂无自定义标签</b><p>老师在编辑题目标签时创建后，会显示在这里。</p></div>`}</div>
+      <footer><span>删除标签会影响所有关联题目，操作前会再次确认</span><button type="button" data-close-personal-tag-manager>完成</button></footer>
+    </section></div>`
   }
 
   function deletePersonalTagGlobally(tag) {
     if (!tag) return
+    const affectedSourceIds = new Set(personalQuestions.filter((question) => (question.customTags || []).includes(tag)).map((question) => question.id))
     personalQuestions.forEach((question) => {
       question.customTags = (question.customTags || []).filter((item) => item !== tag)
     })
     ;(activeDraft?.questions || []).forEach((question) => {
-      if (question.status === 'confirmed' && question.sourceId) question.customTags = (question.customTags || []).filter((item) => item !== tag)
+      if (question.status === 'confirmed' && affectedSourceIds.has(question.sourceId)) question.customTags = (question.customTags || []).filter((item) => item !== tag)
     })
     personalTagCatalog = personalTagCatalog.filter((item) => item !== tag)
     if (personalCollection === `tag:${tag}`) personalCollection = 'all'
@@ -2442,7 +2465,7 @@
     if (personalCurriculumFilter !== 'all' && !personalCurriculumOptions().includes(personalCurriculumFilter)) personalCurriculumFilter = 'all'
     if (personalKnowledgeFilter !== 'all' && !personalKnowledgeOptions().includes(personalKnowledgeFilter)) personalKnowledgeFilter = 'all'
     if (filterType !== '全部题型' && !personalQuestions.some((item) => questionTypeTags(item).includes(filterType))) filterType = '全部题型'
-    if (filterDifficulty !== '全部难度' && !personalQuestions.some((item) => questionDifficultyTags(item).includes(filterDifficulty))) filterDifficulty = '全部难度'
+    personalDifficultyFilters = new Set([...personalDifficultyFilters].filter((difficulty) => personalQuestions.some((item) => questionDifficultyTags(item).includes(difficulty))))
     if (personalCollection.startsWith('tag:') && personalCollectionCount(personalCollection) === 0) personalCollection = 'all'
     questionLabelEditorId = ''
     questionLabelEditorFocus = 'curriculum'
@@ -2730,6 +2753,7 @@
     ${questionLabelEditorMarkup()}
     ${personalTagEditorMarkup()}
     ${personalDeletePromptMarkup()}
+    ${personalTagManagerMarkup()}
     ${personalTagDeletePromptMarkup()}
     ${paperActionPromptMarkup()}
     ${saveBeforeNewDialogMarkup()}
@@ -3050,6 +3074,11 @@
     bindRichFloatPointerTracking()
 
     root.addEventListener('click', (event) => {
+      if (personalDifficultyFilterOpen && !event.target.closest('.wb3-personal-difficulty-filter')) {
+        personalDifficultyFilterOpen = false
+        root?.querySelector('.wb3-personal-difficulty-menu')?.remove()
+        root?.querySelector('[data-toggle-personal-difficulty-filter]')?.setAttribute('aria-expanded', 'false')
+      }
       if (textbookPickerOpen && !event.target.closest('.wb3-textbook-picker')) {
         textbookPickerOpen = false
         render()
@@ -3165,6 +3194,28 @@
         personalBatchMode = !personalBatchMode
         selectedPersonalQuestionIds = new Set()
         renderPreservingResultScroll()
+        return
+      }
+
+      if (event.target.closest('[data-toggle-personal-difficulty-filter]')) {
+        personalDifficultyFilterOpen = !personalDifficultyFilterOpen
+        renderPreservingResultScroll()
+        return
+      }
+      const personalDifficulty = event.target.closest('[data-toggle-personal-difficulty]')
+      if (personalDifficulty) {
+        const difficulty = personalDifficulty.dataset.togglePersonalDifficulty
+        if (personalDifficultyFilters.has(difficulty)) personalDifficultyFilters.delete(difficulty)
+        else personalDifficultyFilters.add(difficulty)
+        personalDifficultyFilterOpen = true
+        selectedPersonalQuestionIds = new Set()
+        renderPreservingResultScroll()
+        return
+      }
+
+      if (event.target.closest('[data-close-personal-tag-manager]') || (event.target.closest('[data-personal-tag-manager-overlay]') && !event.target.closest('.wb3-personal-tag-manager-dialog'))) {
+        personalTagManagerOpen = false
+        render()
         return
       }
 
@@ -3606,6 +3657,7 @@
         personalImportReturnScrollTop = 0
         personalLibraryMode = personalLibraryTab.dataset.personalLibrary === 'papers' ? 'papers' : 'questions'
         if (personalLibraryMode === 'papers') aiRecordingDrawerOpen = false
+        personalDifficultyFilterOpen = false
         previewKnowledgePaperId = ''
         render()
         return
@@ -3697,6 +3749,8 @@
         activeKnowledge = firstKnowledgeName()
         filterType = '全部题型'
         filterDifficulty = '全部难度'
+        personalDifficultyFilters = new Set()
+        personalDifficultyFilterOpen = false
         render()
         return
       }
@@ -3767,6 +3821,8 @@
         treeSearchQuery = ''
         filterType = '全部题型'
         filterDifficulty = '全部难度'
+        personalDifficultyFilters = new Set()
+        personalDifficultyFilterOpen = false
         personalCurriculumFilter = 'all'
         personalKnowledgeFilter = 'all'
         personalCollection = 'all'
@@ -4028,6 +4084,11 @@
         return
       }
       if (event.target.id === 'wb3PersonalTagFilter') {
+        if (event.target.value === '__manage__') {
+          personalTagManagerOpen = true
+          render()
+          return
+        }
         personalCollection = event.target.value ? `tag:${event.target.value}` : 'all'
         selectedPersonalQuestionIds = new Set()
         render()
@@ -4054,6 +4115,24 @@
       if (event.target.id === 'wb3NewQuestionCustomTag' && event.key === 'Enter') {
         event.preventDefault()
         createQuestionCustomTag()
+      }
+      if (event.key === 'Escape' && pendingPersonalTagDelete) {
+        event.preventDefault()
+        pendingPersonalTagDelete = ''
+        render()
+        return
+      }
+      if (event.key === 'Escape' && personalTagManagerOpen) {
+        event.preventDefault()
+        personalTagManagerOpen = false
+        render()
+        return
+      }
+      if (event.key === 'Escape' && personalDifficultyFilterOpen) {
+        event.preventDefault()
+        personalDifficultyFilterOpen = false
+        renderPreservingResultScroll()
+        return
       }
       if (event.key === 'Escape' && questionLabelEditorId) {
         event.preventDefault()
@@ -4327,6 +4406,8 @@
       applyBankSearchFromStorage()
       filterType = '全部题型'
       filterDifficulty = '全部难度'
+      personalDifficultyFilters = new Set()
+      personalDifficultyFilterOpen = false
       selectedQuestionId = ''
       revealedAnswerIds = new Set()
       uploadParsing = false
@@ -4350,6 +4431,7 @@
       personalImportRecordViewId = ''
       personalImportReturnScrollTop = 0
       personalTagEditorQuestionIds = []
+      personalTagManagerOpen = false
       pendingPersonalTagDelete = ''
       resetBulkLabelEditorState()
       questionLabelEditorId = ''
@@ -4383,6 +4465,7 @@
       personalImportReturnScrollTop = 0
       personalPaperReturnScrollTop = 0
       personalTagEditorQuestionIds = []
+      personalTagManagerOpen = false
       pendingPersonalTagDelete = ''
       resetBulkLabelEditorState()
       questionLabelEditorId = ''
