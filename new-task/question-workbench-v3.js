@@ -1375,20 +1375,17 @@
   }
 
   function personalKnowledgeOptions() {
+    if (personalCurriculumFilter === 'all') return []
     return [...new Set(personalQuestions
-      .filter((question) => personalCurriculumFilter === 'all' || questionCurriculumTags(question).includes(personalCurriculumFilter))
+      .filter((question) => questionCurriculumTags(question).includes(personalCurriculumFilter))
       .flatMap((question) => questionKnowledgeTags(question))
       .filter(Boolean))]
   }
 
   function personalKnowledgeFilterLabel(name) {
-    const matchedQuestion = personalQuestions.find((question) => questionKnowledgeTags(question).includes(name))
-    const curriculum = personalCurriculumFilter !== 'all'
-      ? personalCurriculumFilter
-      : questionCurriculumTags(matchedQuestion || {})[0]
-    const catalog = curriculumCatalog[curriculum]
+    const catalog = curriculumCatalog[personalCurriculumFilter]
     const parent = Object.entries(catalog?.parents || {}).find(([, children]) => children.includes(name))?.[0]
-    return [personalCurriculumFilter === 'all' ? curriculumTagLabel(curriculum) : '', parent, name].filter(Boolean).join(' / ')
+    return [parent, name].filter(Boolean).join(' / ')
   }
 
   function personalPapersListMarkup(papers) {
@@ -2194,7 +2191,7 @@
       ? `<div class="wb3-import-result-head"><button type="button" data-close-import-result>${icons.back}<span>返回题目列表</span></button><div><b title="${escapeHtml(importResultRecord.filename)}">${escapeHtml(importResultRecord.filename)}</b><span>AI录题完成 · 共 ${questions.length} 道题 · 已自动添加题目标签</span></div></div>`
       : isLibraryTab
       ? `<div class="wb3-results-filters"><label><select id="wb3FilterType" aria-label="题型"><option value="全部题型" ${filterType === '全部题型' ? 'selected' : ''}>全部题型</option>${typeOptions.map((name) => `<option value="${escapeHtml(name)}" ${filterType === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label><select id="wb3FilterDifficulty" aria-label="难度"><option value="全部难度" ${filterDifficulty === '全部难度' ? 'selected' : ''}>全部难度</option>${difficultyOptions.map((name) => `<option ${filterDifficulty === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="wb3-filter-search"><span class="wb3-main-search">${icons.search}<input id="wb3TreeSearch" type="search" value="${escapeHtml(treeSearchQuery)}" placeholder="${browseByChapter ? '搜索教材章节或题干关键词' : '搜索知识点或题干关键词'}"></span></label></div>`
-      : `<div class="wb3-results-filters wb3-personal-filter-bar"><label class="wb3-personal-scope-filter ${personalCurriculumFilter !== 'all' ? 'is-active' : ''}"><select id="wb3PersonalCurriculumFilter" aria-label="阶段和科目"><option value="all">阶段·科目</option>${curriculumOptions.map((name) => `<option value="${escapeHtml(name)}" ${personalCurriculumFilter === name ? 'selected' : ''}>${escapeHtml(curriculumTagLabel(name))}</option>`).join('')}</select></label><label class="wb3-personal-type-filter ${filterType !== '全部题型' ? 'is-active' : ''}"><select id="wb3FilterType" aria-label="题型"><option value="全部题型" ${filterType === '全部题型' ? 'selected' : ''}>题型</option>${typeOptions.map((name) => `<option value="${escapeHtml(name)}" ${filterType === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="wb3-personal-difficulty-filter ${filterDifficulty !== '全部难度' ? 'is-active' : ''}"><select id="wb3FilterDifficulty" aria-label="难度"><option value="全部难度" ${filterDifficulty === '全部难度' ? 'selected' : ''}>难度</option>${difficultyOptions.map((name) => `<option ${filterDifficulty === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="wb3-personal-knowledge-filter ${personalKnowledgeFilter !== 'all' ? 'is-active' : ''}"><select id="wb3PersonalKnowledgeFilter" aria-label="知识点"><option value="all">知识点</option>${personalKnowledgeOptionMarkup}</select></label>${personalTagFilterMarkup}<label class="wb3-filter-search"><span class="wb3-main-search">${icons.search}<input id="wb3TreeSearch" type="search" value="${escapeHtml(treeSearchQuery)}" placeholder="搜索题干或标签" aria-label="搜索题干或标签"></span></label>${hasPersonalFilters ? '<button type="button" class="wb3-filter-reset" data-clear-bank-filters>重置</button>' : ''}</div>`
+      : `<div class="wb3-results-filters wb3-personal-filter-bar"><label class="wb3-personal-scope-filter ${personalCurriculumFilter !== 'all' ? 'is-active' : ''}"><select id="wb3PersonalCurriculumFilter" aria-label="阶段和科目"><option value="all">阶段·科目</option>${curriculumOptions.map((name) => `<option value="${escapeHtml(name)}" ${personalCurriculumFilter === name ? 'selected' : ''}>${escapeHtml(curriculumTagLabel(name))}</option>`).join('')}</select></label><label class="wb3-personal-type-filter ${filterType !== '全部题型' ? 'is-active' : ''}"><select id="wb3FilterType" aria-label="题型"><option value="全部题型" ${filterType === '全部题型' ? 'selected' : ''}>题型</option>${typeOptions.map((name) => `<option value="${escapeHtml(name)}" ${filterType === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="wb3-personal-difficulty-filter ${filterDifficulty !== '全部难度' ? 'is-active' : ''}"><select id="wb3FilterDifficulty" aria-label="难度"><option value="全部难度" ${filterDifficulty === '全部难度' ? 'selected' : ''}>难度</option>${difficultyOptions.map((name) => `<option ${filterDifficulty === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select></label><label class="wb3-personal-knowledge-filter ${personalKnowledgeFilter !== 'all' ? 'is-active' : ''}" title="${personalCurriculumFilter === 'all' ? '请先选择阶段·科目' : ''}"><select id="wb3PersonalKnowledgeFilter" aria-label="知识点" ${personalCurriculumFilter === 'all' ? 'disabled' : ''}><option value="all">知识点</option>${personalKnowledgeOptionMarkup}</select></label>${personalTagFilterMarkup}<label class="wb3-filter-search"><span class="wb3-main-search">${icons.search}<input id="wb3TreeSearch" type="search" value="${escapeHtml(treeSearchQuery)}" placeholder="搜索题干或标签" aria-label="搜索题干或标签"></span></label>${hasPersonalFilters ? '<button type="button" class="wb3-filter-reset" data-clear-bank-filters>重置</button>' : ''}</div>`
     return `<section class="wb3-library">
       ${workspaceTabsMarkup()}
       ${personalSubtabs}
