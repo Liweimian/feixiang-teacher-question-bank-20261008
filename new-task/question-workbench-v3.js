@@ -2606,7 +2606,6 @@
       && (!bulkSetCurriculumEnabled || Boolean(bulkCurriculumValue))
       && (!bulkSetTypeEnabled || bulkTypeValues.size > 0)
       && (!bulkSetDifficultyEnabled || Boolean(bulkDifficultyValue))
-      && (!bulkSetKnowledgeEnabled || bulkKnowledgeValues.size > 0)
       && (!bulkSetCustomEnabled || bulkCustomValues.size > 0)
     if (!selectionValid) {
       showToast(!linkedSelectionValid ? '阶段·科目不一致时，阶段·科目、题型和知识点必须一起设置' : hasEnabledScope ? '请先选择要统一设置的标签' : '请先选择要设置的标签类型')
@@ -2724,7 +2723,6 @@
       && (!bulkSetCurriculumEnabled || Boolean(bulkCurriculumValue))
       && (!bulkSetTypeEnabled || bulkTypeValues.size > 0)
       && (!bulkSetDifficultyEnabled || Boolean(bulkDifficultyValue))
-      && (!bulkSetKnowledgeEnabled || bulkKnowledgeValues.size > 0)
       && (!bulkSetCustomEnabled || bulkCustomValues.size > 0)
     const enabledKinds = [bulkSetCurriculumEnabled ? '阶段·科目' : '', bulkSetTypeEnabled ? '题型' : '', bulkSetDifficultyEnabled ? '难度' : '', bulkSetKnowledgeEnabled ? '知识点' : '', bulkSetCustomEnabled ? '自定义标签' : ''].filter(Boolean)
     const footerText = selectionValid
@@ -2744,7 +2742,7 @@
           ${bulkSetCurriculumEnabled ? `<section class="wb3-bulk-overwrite-field"><header><div><b>选择阶段·科目</b><span>单选</span></div><em>将覆盖原阶段·科目</em></header>${bulkDropdownMarkup('curriculum', '阶段·科目', Object.keys(curriculumCatalog), bulkCurriculumValue ? [bulkCurriculumValue] : [], { multiple: false, formatter: curriculumTagLabel })}${bulkCurriculumValue ? '' : '<p class="wb3-bulk-overwrite-error">请选择一个阶段·科目</p>'}</section>` : ''}
           ${bulkSetTypeEnabled ? `<section class="wb3-bulk-overwrite-field"><header><div><b>选择题型</b><span>可多选</span></div><em>将覆盖原题型</em></header>${effectiveCurriculum ? bulkDropdownMarkup('type', '题型', typeOptions, [...bulkTypeValues]) : '<p class="wb3-bulk-linked-empty">请先选择阶段·科目，再设置对应题型</p>'}${bulkTypeValues.size ? '' : '<p class="wb3-bulk-overwrite-error">至少选择一个题型后才能保存</p>'}</section>` : ''}
           ${bulkSetDifficultyEnabled ? `<section class="wb3-bulk-overwrite-field"><header><div><b>选择难度</b><span>单选</span></div><em>将覆盖原难度</em></header>${bulkDropdownMarkup('difficulty', '难度', difficultyOptions, bulkDifficultyValue ? [bulkDifficultyValue] : [], { multiple: false })}${bulkDifficultyValue ? '' : '<p class="wb3-bulk-overwrite-error">请选择一个难度</p>'}</section>` : ''}
-          ${bulkSetKnowledgeEnabled ? `<section class="wb3-bulk-overwrite-field"><header><div><b>选择知识点</b><span>可多选，仅使用飞象标签库</span></div><em>将覆盖原知识点</em></header>${effectiveCurriculum ? bulkDropdownMarkup('knowledge', '知识点', knowledgeOptions, [...bulkKnowledgeValues]) : '<p class="wb3-bulk-linked-empty">请先选择阶段·科目，再设置对应知识点</p>'}${bulkKnowledgeValues.size ? '' : '<p class="wb3-bulk-overwrite-error">至少选择一个知识点后才能保存</p>'}</section>` : ''}
+          ${bulkSetKnowledgeEnabled ? `<section class="wb3-bulk-overwrite-field"><header><div><b>选择知识点</b><span>可多选，也可为空</span></div><em>${bulkKnowledgeValues.size ? '将覆盖原知识点' : '不选则清空原知识点'}</em></header>${effectiveCurriculum ? bulkDropdownMarkup('knowledge', '知识点', knowledgeOptions, [...bulkKnowledgeValues]) : '<p class="wb3-bulk-linked-empty">请先选择阶段·科目，再设置对应知识点</p>'}</section>` : ''}
           ${bulkSetCustomEnabled ? `<section class="wb3-bulk-overwrite-field"><header><div><b>选择自定义标签</b><span>可选择已有标签，也可自由创建</span></div><em>将覆盖原自定义标签</em></header><div class="wb3-bulk-overwrite-selected">${selectedValueMarkup('custom', [...bulkCustomValues])}</div><div class="wb3-bulk-overwrite-custom-options">${availableCustomTags.map((tag) => `<button type="button" data-add-bulk-value="${escapeHtml(tag)}" data-bulk-label-kind="custom">＋ ${escapeHtml(tag)}</button>`).join('')}<label class="wb3-custom-tag-compose"><span aria-hidden="true">${icons.plus}</span><input id="wb3NewPersonalTag" maxlength="12" placeholder="输入后回车新建" aria-label="新建自定义标签"></label></div>${bulkCustomValues.size ? '' : '<p class="wb3-bulk-overwrite-error">至少选择一个自定义标签后才能保存</p>'}</section>` : ''}
         </div>
       </div>
