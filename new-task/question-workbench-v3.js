@@ -421,6 +421,7 @@
     }
   }
   let personalDeletePromptId = ''
+  let bulkDeletePromptIds = []
   let personalTagManagerOpen = false
   let pendingPersonalTagDelete = ''
   let pendingPaperEditId = ''
@@ -2215,7 +2216,7 @@
           <header class="wb3-results-head">
             ${filtersMarkup}
           </header>
-          ${personalBulkTagToolbarMarkup(questions.length, Boolean(importResultRecord))}
+          ${personalBulkTagToolbarMarkup(questions, Boolean(importResultRecord))}
           ${importCompletionNoticeMarkup()}
           ${uploadParsing ? `<div class="wb3-upload-status"><i></i>AI 录题正在解析，完成后题目进入「我的题库」…</div>` : ''}
           <div class="wb3-result-scroll">${resultsBody}</div>${unlockPrompt}
@@ -2341,6 +2342,14 @@
       ? '该题已加入右侧当前题单，确认删除后将从<strong>我的题库与当前画布</strong>中一并移除。'
       : '删除后无法再从「我的题库」选用。'
     return `<div class="wb3-overlay" data-personal-delete-overlay><div class="wb3-unlock-dialog wb3-confirm-dialog" role="dialog" aria-labelledby="wb3PersonalDeleteTitle"><span>${icons.trash}</span><h3 id="wb3PersonalDeleteTitle">从我的题库删除？</h3><p>${hint}</p><div><button type="button" data-personal-delete-cancel>取消</button><button type="button" class="primary danger" data-personal-delete-confirm>确认删除</button></div></div></div>`
+  }
+
+  function bulkDeletePromptMarkup() {
+    if (!bulkDeletePromptIds.length) return ''
+    const sourceIds = new Set(bulkDeletePromptIds)
+    const canvasCount = (activeDraft?.questions || []).filter((question) => question.status === 'confirmed' && sourceIds.has(question.sourceId)).length
+    const canvasHint = canvasCount ? `，其中 ${canvasCount} 道已加入当前题单，将同步移除` : ''
+    return `<div class="wb3-overlay" data-bulk-delete-overlay><div class="wb3-unlock-dialog wb3-confirm-dialog" role="dialog" aria-labelledby="wb3BulkDeleteTitle"><span>${icons.trash}</span><h3 id="wb3BulkDeleteTitle">批量删除题目？</h3><p>确认从「我的题库」删除已选的 ${bulkDeletePromptIds.length} 道题${canvasHint}。删除后无法恢复。</p><div><button type="button" data-bulk-delete-cancel>取消</button><button type="button" class="primary danger" data-bulk-delete-confirm>确认删除</button></div></div></div>`
   }
 
   function personalTagDeletePromptMarkup() {
@@ -2743,11 +2752,15 @@
     </section></div>`
   }
 
-  function personalBulkTagToolbarMarkup(resultCount = 0, inImportResult = false) {
+  function personalBulkTagToolbarMarkup(resultQuestions = [], inImportResult = false) {
+    const visibleIds = resultQuestions.map((question) => question.id)
+    const resultCount = visibleIds.length
     const count = [...selectedPersonalQuestionIds].filter((id) => personalQuestions.some((question) => question.id === id)).length
+    const selectedVisibleCount = visibleIds.filter((id) => selectedPersonalQuestionIds.has(id)).length
+    const allVisibleSelected = resultCount > 0 && selectedVisibleCount === resultCount
     if (questionSource !== 'personal' || importWorkspaceView !== 'library' || personalLibraryMode !== 'questions' || inImportResult) return ''
     if (!personalBatchMode) return `<div class="wb3-personal-bulk-toolbar wb3-personal-list-toolbar"><span>共 ${resultCount} 道题</span><button type="button" data-toggle-personal-batch ${resultCount ? '' : 'disabled'}>${icons.tag}批量操作</button></div>`
-    return `<div class="wb3-personal-bulk-toolbar active" role="toolbar" aria-label="批量操作题目"><span>${count ? `已选 <b>${count}</b> 道题` : '请选择要批量编辑标签的题目'}</span><button type="button" data-clear-personal-selection ${count ? '' : 'disabled'}>清空选择</button><button type="button" class="primary" data-open-bulk-personal-tag ${count ? '' : 'disabled'}>${icons.tag}批量编辑标签</button><button type="button" data-toggle-personal-batch>退出</button></div>`
+    return `<div class="wb3-personal-bulk-toolbar active" role="toolbar" aria-label="批量操作题目"><label class="wb3-personal-select-all" title="全选当前结果"><input type="checkbox" data-select-all-personal ${allVisibleSelected ? 'checked' : ''} ${resultCount ? '' : 'disabled'}><span aria-hidden="true"></span><i>全选</i></label><span>${count ? `已选 <b>${count}</b> 道题` : '请选择要批量编辑的题目'}</span><button type="button" class="wb3-bulk-delete-icon" data-delete-selected-personal ${count ? '' : 'disabled'} aria-label="删除已选题目" title="删除已选题目">${icons.trash}</button><button type="button" class="primary" data-open-bulk-personal-tag ${count ? '' : 'disabled'}>${icons.tag}批量编辑标签</button><button type="button" data-toggle-personal-batch>退出</button></div>`
   }
 
   function paperActionPromptMarkup() {
@@ -2829,6 +2842,31 @@
     showToast(removedFromCanvas ? '已从我的题库删除，并同步移出当前题单' : '已从“我的题库”删除')
   }
 
+  function removeSelectedPersonalQuestions() {
+    const ids = new Set(bulkDeletePromptIds.filter((id) => personalQuestions.some((question) => question.id === id)))
+    if (!ids.size) {
+      bulkDeletePromptIds = []
+      render()
+      return
+    }
+    const canvasBefore = activeDraft.questions.length
+    activeDraft.questions = activeDraft.questions.filter((question) => !(question.status === 'confirmed' && ids.has(question.sourceId)))
+    const removedFromCanvas = canvasBefore - activeDraft.questions.length
+    if (selectedQuestionId && !activeDraft.questions.some((question) => question.id === selectedQuestionId)) selectedQuestionId = ''
+    if (removedFromCanvas) persistDraft()
+    personalQuestions = personalQuestions.filter((question) => !ids.has(question.id))
+    ids.forEach((id) => {
+      selectedPersonalQuestionIds.delete(id)
+      revealedAnswerIds.delete(id)
+    })
+    personalTagEditorQuestionIds = personalTagEditorQuestionIds.filter((id) => !ids.has(id))
+    if (adaptRequest?.source?.id && ids.has(adaptRequest.source.id)) adaptRequest = null
+    if (adaptPicker?.source?.id && ids.has(adaptPicker.source.id)) adaptPicker = null
+    bulkDeletePromptIds = []
+    render()
+    showToast(removedFromCanvas ? `已删除 ${ids.size} 道题，并同步移出当前题单` : `已从“我的题库”删除 ${ids.size} 道题`)
+  }
+
   function render() {
     if (!root || !activeDraft) return
     captureAiCreateInputDraft()
@@ -2837,6 +2875,7 @@
     ${questionLabelEditorMarkup()}
     ${personalTagEditorMarkup()}
     ${personalDeletePromptMarkup()}
+    ${bulkDeletePromptMarkup()}
     ${personalTagManagerMarkup()}
     ${personalTagDeletePromptMarkup()}
     ${paperActionPromptMarkup()}
@@ -3277,6 +3316,7 @@
       if (event.target.closest('[data-toggle-personal-batch]')) {
         personalBatchMode = !personalBatchMode
         selectedPersonalQuestionIds = new Set()
+        bulkDeletePromptIds = []
         renderPreservingResultScroll()
         return
       }
@@ -3477,9 +3517,19 @@
         return
       }
 
-      if (event.target.closest('[data-clear-personal-selection]')) {
-        selectedPersonalQuestionIds = new Set()
-        renderPreservingResultScroll()
+      if (event.target.closest('[data-delete-selected-personal]')) {
+        bulkDeletePromptIds = [...selectedPersonalQuestionIds].filter((id) => personalQuestions.some((question) => question.id === id))
+        render()
+        return
+      }
+
+      if (event.target.closest('[data-bulk-delete-confirm]')) {
+        removeSelectedPersonalQuestions()
+        return
+      }
+      if (event.target.closest('[data-bulk-delete-cancel]') || event.target.matches('[data-bulk-delete-overlay]')) {
+        bulkDeletePromptIds = []
+        render()
         return
       }
 
@@ -4374,6 +4424,13 @@
         renderPreservingResultScroll()
         return
       }
+      if (event.target.matches('[data-select-all-personal]')) {
+        const visibleIds = filterBankQuestions().map((question) => question.id)
+        if (event.target.checked) visibleIds.forEach((id) => selectedPersonalQuestionIds.add(id))
+        else visibleIds.forEach((id) => selectedPersonalQuestionIds.delete(id))
+        renderPreservingResultScroll()
+        return
+      }
       if (event.target.classList.contains('wb3-subject-switch')) {
         saveBankSearchToStorage()
         curriculumKey = event.target.value
@@ -4589,6 +4646,7 @@
       personalPaperReturnScrollTop = 0
       selectedPersonalQuestionIds = new Set()
       personalBatchMode = false
+      bulkDeletePromptIds = []
       aiRecordingDrawerOpen = false
       personalImportRecordViewId = ''
       personalImportReturnScrollTop = 0
@@ -4622,6 +4680,7 @@
       aiComposeReturnScrollTop = 0
       selectedPersonalQuestionIds = new Set()
       personalBatchMode = false
+      bulkDeletePromptIds = []
       aiRecordingDrawerOpen = false
       personalImportRecordViewId = ''
       personalImportReturnScrollTop = 0

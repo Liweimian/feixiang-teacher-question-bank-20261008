@@ -637,12 +637,21 @@ body.fx-question-workbench-v3-open { overflow: hidden; }
 .wb3-personal-list-toolbar { min-height: 42px; background: #fff; }
 .wb3-personal-list-toolbar > button { margin-left: auto; font-weight: 650; }
 .wb3-personal-bulk-toolbar.active { box-shadow: inset 3px 0 0 var(--wb3-green); }
-.wb3-personal-bulk-toolbar span { margin-right: auto; }
-.wb3-personal-bulk-toolbar span b { color: var(--wb3-green); }
+.wb3-personal-bulk-toolbar > span { margin-right: auto; }
+.wb3-personal-bulk-toolbar > span b { color: var(--wb3-green); }
 .wb3-personal-bulk-toolbar button { height: 31px; display: inline-flex; align-items: center; gap: 5px; padding: 0 10px; border: 1px solid var(--wb3-line); border-radius: 7px; background: #fff; color: var(--wb3-ink); font-size: 11px; }
 .wb3-personal-bulk-toolbar button.primary { border-color: var(--wb3-green); background: var(--wb3-green); color: #fff; }
 .wb3-personal-bulk-toolbar button svg { width: 13px; height: 13px; }
 .wb3-personal-bulk-toolbar button:disabled { cursor: not-allowed; opacity: .45; }
+.wb3-personal-select-all { flex: none; display: inline-flex; align-items: center; gap: 7px; color: var(--wb3-ink); cursor: pointer; }
+.wb3-personal-select-all input { position: absolute; opacity: 0; pointer-events: none; }
+.wb3-personal-select-all > span { width: 16px; height: 16px; display: grid; place-items: center; border: 1px solid var(--wb3-line); border-radius: 4px; background: #fff; }
+.wb3-personal-select-all input:checked + span { border-color: var(--wb3-green); background: var(--wb3-green); }
+.wb3-personal-select-all input:checked + span::after { width: 7px; height: 4px; border-left: 2px solid #fff; border-bottom: 2px solid #fff; content: ''; transform: translateY(-1px) rotate(-45deg); }
+.wb3-personal-select-all input:focus-visible + span { outline: 2px solid rgba(31,125,83,.2); outline-offset: 2px; }
+.wb3-personal-select-all i { font-style: normal; font-size: 11px; }
+.wb3-personal-bulk-toolbar button.wb3-bulk-delete-icon { width: 31px; padding: 0; justify-content: center; border-color: #e3c7c2; color: #a0645b; }
+.wb3-personal-bulk-toolbar button.wb3-bulk-delete-icon:hover:not(:disabled) { border-color: #d6aaa3; background: #fff6f4; color: #9d4338; }
 
 .wb3-sort-row { height: 52px; display: flex; align-items: flex-end; gap: 24px; flex: none; padding: 0 16px; border-bottom: 1px solid #edf1ef; }
 .wb3-sort-row button { position: relative; height: 43px; padding: 0 2px; border: 0; background: transparent; color: #85918b; font-size: 14px; font-weight: 650; }
