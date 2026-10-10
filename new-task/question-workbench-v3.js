@@ -395,7 +395,6 @@
   let questionLabelDraft = null
   let questionLabelCurriculumSnapshots = new Map()
   let questionLabelDropdownOpen = ''
-  let questionLabelDropdownQuery = ''
   let adaptRequest = null
   let adaptPicker = null
   let sheetDragId = ''
@@ -2378,7 +2377,6 @@
     questionLabelEditorId = question.id
     questionLabelEditorFocus = ['curriculum', 'type', 'difficulty', 'knowledge', 'custom'].includes(focus) ? focus : ''
     questionLabelDropdownOpen = questionLabelEditorFocus && questionLabelEditorFocus !== 'custom' ? questionLabelEditorFocus : ''
-    questionLabelDropdownQuery = ''
     questionLabelDraft = {
       curriculumTags: [...questionCurriculumTags(question)],
       typeTags: [...questionTypeTags(question)],
@@ -2402,7 +2400,6 @@
     questionLabelDraft = null
     questionLabelCurriculumSnapshots = new Map()
     questionLabelDropdownOpen = ''
-    questionLabelDropdownQuery = ''
     renderPreservingResultScroll()
   }
 
@@ -2452,7 +2449,6 @@
     questionLabelDraft = null
     questionLabelCurriculumSnapshots = new Map()
     questionLabelDropdownOpen = ''
-    questionLabelDropdownQuery = ''
     renderPreservingResultScroll()
     showToast(syncedCanvas ? '题目标签已更新，并同步到当前题单' : '题目标签已更新')
   }
@@ -2461,24 +2457,18 @@
     return `<button type="button" class="${selected ? 'selected' : ''}" data-toggle-question-label="${escapeHtml(value)}" data-question-label-kind="${group}" data-question-label-option-text="${escapeHtml(String(label).toLowerCase())}" aria-pressed="${selected}"><span>${escapeHtml(label)}</span>${selected ? icons.check : ''}</button>`
   }
 
-  function questionLabelDropdownMarkup(group, title, options, selectedValues, { multiple = true, searchable = true, formatter = (value) => value } = {}) {
+  function questionLabelDropdownMarkup(group, title, options, selectedValues, { multiple = true, formatter = (value) => value } = {}) {
     const isOpen = questionLabelDropdownOpen === group
     const selectedLabels = selectedValues.map(formatter)
     const selectedSummary = selectedLabels.length
       ? `${selectedLabels.slice(0, 2).join('、')}${selectedLabels.length > 2 ? ` +${selectedLabels.length - 2}` : ''}`
       : `请选择${title}`
-    const query = isOpen && searchable ? questionLabelDropdownQuery.trim().toLowerCase() : ''
-    const matchedOptions = query ? options.filter((value) => String(formatter(value)).toLowerCase().includes(query)) : options
-    const visibleOptions = matchedOptions.slice(0, 80)
-    const optionMarkup = visibleOptions.map((value) => questionLabelOptionMarkup(group, value, selectedValues.includes(value), formatter(value))).join('')
-    const resultHint = matchedOptions.length > visibleOptions.length
-      ? `<p class="wb3-question-label-dropdown-hint">还有 ${matchedOptions.length - visibleOptions.length} 项，请继续输入关键词</p>`
-      : ''
+    const optionMarkup = options.map((value) => questionLabelOptionMarkup(group, value, selectedValues.includes(value), formatter(value))).join('')
     return `<section class="wb3-question-label-editor-field ${questionLabelEditorFocus === group ? 'focused' : ''}" data-question-label-group="${group}">
       <header><b>${title}</b><span>${multiple ? '可多选' : '单选'}</span></header>
       <div class="wb3-question-label-select ${isOpen ? 'open' : ''}">
         <button type="button" class="wb3-question-label-select-trigger" data-toggle-question-label-dropdown="${group}" aria-expanded="${isOpen}"><span class="${selectedLabels.length ? '' : 'placeholder'}">${escapeHtml(selectedSummary)}</span><i aria-hidden="true">⌄</i></button>
-        ${isOpen ? `<div class="wb3-question-label-dropdown">${searchable ? `<label>${icons.search}<input type="search" value="${escapeHtml(questionLabelDropdownQuery)}" data-question-label-dropdown-search="${group}" placeholder="搜索${title}" autocomplete="off"></label>` : ''}<div class="wb3-question-label-dropdown-meta">已选 ${selectedValues.length} 项 · 共 ${options.length} 项</div><div class="wb3-question-label-dropdown-options" role="listbox" aria-multiselectable="${multiple}">${optionMarkup || '<p class="wb3-question-label-dropdown-empty">没有匹配项</p>'}</div>${resultHint}</div>` : ''}
+        ${isOpen ? `<div class="wb3-question-label-dropdown"><div class="wb3-question-label-dropdown-meta">已选 ${selectedValues.length} 项 · 共 ${options.length} 项</div><div class="wb3-question-label-dropdown-options" role="listbox" aria-multiselectable="${multiple}">${optionMarkup || '<p class="wb3-question-label-dropdown-empty">没有可选项</p>'}</div></div>` : ''}
       </div>
     </section>`
   }
@@ -2510,7 +2500,7 @@
     return `<div class="wb3-overlay wb3-question-label-overlay" data-question-label-overlay><section class="wb3-question-label-dialog" role="dialog" aria-modal="true" aria-labelledby="wb3QuestionLabelTitle">
       <header><span>${icons.tag}</span><div><h3 id="wb3QuestionLabelTitle">编辑题目标签</h3><p>系统标签从飞象标签库选择，自定义标签由你自由创建</p></div><button type="button" data-close-question-label-editor aria-label="关闭">×</button></header>
       <div class="wb3-question-label-editor-body">
-        ${questionLabelDropdownMarkup('curriculum', '阶段·科目', Object.keys(curriculumCatalog), questionLabelDraft.curriculumTags, { multiple: false, searchable: false, formatter: curriculumTagLabel })}
+        ${questionLabelDropdownMarkup('curriculum', '阶段·科目', Object.keys(curriculumCatalog), questionLabelDraft.curriculumTags, { multiple: false, formatter: curriculumTagLabel })}
         ${questionLabelDropdownMarkup('type', '题型', typeOptions, questionLabelDraft.typeTags)}
         ${questionLabelDropdownMarkup('difficulty', '难度', difficultyOptions, [questionLabelDraft.difficulty], { multiple: false })}
         ${questionLabelDropdownMarkup('knowledge', '知识点', knowledgeOptions, questionLabelDraft.knowledgeTags)}
@@ -3205,9 +3195,7 @@
         const kind = toggleQuestionLabelDropdown.dataset.toggleQuestionLabelDropdown
         questionLabelEditorFocus = kind
         questionLabelDropdownOpen = questionLabelDropdownOpen === kind ? '' : kind
-        questionLabelDropdownQuery = ''
         renderPreservingResultScroll()
-        if (questionLabelDropdownOpen) window.requestAnimationFrame(() => root?.querySelector(`[data-question-label-dropdown-search="${kind}"]`)?.focus())
         return
       }
 
@@ -3220,7 +3208,6 @@
         if (kind === 'difficulty') {
           questionLabelDraft.difficulty = value
           questionLabelDropdownOpen = ''
-          questionLabelDropdownQuery = ''
         } else if (kind === 'curriculum') {
           const previousCurriculum = questionLabelDraft.curriculumTags[0]
           if (previousCurriculum) {
@@ -3243,7 +3230,6 @@
             tagFeedback = '已切换对应题型和知识点，请按需调整'
           }
           questionLabelDropdownOpen = ''
-          questionLabelDropdownQuery = ''
         } else {
           const key = kind === 'curriculum' ? 'curriculumTags' : kind === 'type' ? 'typeTags' : kind === 'knowledge' ? 'knowledgeTags' : kind === 'custom' ? 'customTags' : ''
           if (!key) return
@@ -3256,11 +3242,6 @@
           questionLabelDraft[key] = selected ? current.filter((item) => item !== value) : [...current, value]
         }
         renderPreservingResultScroll()
-        if (questionLabelDropdownOpen) window.requestAnimationFrame(() => {
-          const input = root?.querySelector(`[data-question-label-dropdown-search="${questionLabelDropdownOpen}"]`)
-          input?.focus()
-          input?.setSelectionRange(questionLabelDropdownQuery.length, questionLabelDropdownQuery.length)
-        })
         if (tagFeedback) showToast(tagFeedback)
         return
       }
@@ -3989,18 +3970,6 @@
         renderPreservingResultScroll()
         window.requestAnimationFrame(() => {
           const input = $('#wb3BulkKnowledgeSearch', root)
-          input?.focus()
-          input?.setSelectionRange(caret, caret)
-        })
-        return
-      }
-      if (event.target.matches('[data-question-label-dropdown-search]')) {
-        questionLabelDropdownOpen = event.target.dataset.questionLabelDropdownSearch
-        questionLabelDropdownQuery = event.target.value
-        const caret = questionLabelDropdownQuery.length
-        renderPreservingResultScroll()
-        window.requestAnimationFrame(() => {
-          const input = root?.querySelector(`[data-question-label-dropdown-search="${questionLabelDropdownOpen}"]`)
           input?.focus()
           input?.setSelectionRange(caret, caret)
         })

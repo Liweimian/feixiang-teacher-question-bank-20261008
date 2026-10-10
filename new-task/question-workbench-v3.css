@@ -780,10 +780,6 @@ body.fx-question-workbench-v3-open { overflow: hidden; }
 .wb3-question-label-select-trigger > i { flex: none; color: var(--wb3-muted); font-size: 13px; font-style: normal; transition: transform .15s ease; }
 .wb3-question-label-select.open .wb3-question-label-select-trigger > i { transform: rotate(180deg); }
 .wb3-question-label-dropdown { position: absolute; z-index: 20; top: calc(100% + 5px); right: 0; left: 0; padding: 8px; border: 1px solid var(--wb3-line); border-radius: 8px; background: #fff; box-shadow: 0 8px 22px rgba(7,49,35,.16); }
-.wb3-question-label-dropdown > label { height: 32px; display: flex; align-items: center; gap: 7px; padding: 0 9px; border: 1px solid var(--wb3-line); border-radius: 7px; color: var(--wb3-muted); }
-.wb3-question-label-dropdown > label:focus-within { border-color: var(--wb3-green); box-shadow: 0 0 0 2px rgba(31,125,83,.08); }
-.wb3-question-label-dropdown > label svg { width: 14px; height: 14px; flex: none; }
-.wb3-question-label-dropdown > label input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: var(--wb3-ink); font: inherit; font-size: 11px; }
 .wb3-question-label-dropdown-meta { padding: 7px 2px 5px; color: var(--wb3-muted); font-size: 9px; }
 .wb3-question-label-dropdown-options { max-height: 176px; display: grid; gap: 3px; overflow: auto; }
 .wb3-question-label-dropdown-options > button { min-height: 30px; display: flex; align-items: center; gap: 6px; padding: 0 9px; border: 0; border-radius: 6px; background: transparent; color: var(--wb3-ink); font-size: 11px; text-align: left; }
