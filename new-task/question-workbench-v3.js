@@ -1573,7 +1573,7 @@
 
   function personalQuestionLabelGroupMarkup(question, group, title, values, { formatter = (value) => value, emptyText = '待完善' } = {}) {
     const labels = values.map(formatter).filter(Boolean)
-    const displayText = labels.length ? labels.join('、') : emptyText
+    const displayText = labels.length ? labels.join('，') : emptyText
     const tooltip = `${title}：${displayText}`
     return `<span class="wb3-question-label-group group-${group}"><button type="button" class="wb3-question-label-chip ${labels.length ? '' : 'empty'}" data-open-question-label-editor="${escapeHtml(question.id)}" data-label-editor-focus="${group}" aria-label="编辑${escapeHtml(tooltip)}" title="${escapeHtml(tooltip)}">${escapeHtml(displayText)}</button></span>`
   }
@@ -2500,7 +2500,7 @@
     return `<div class="wb3-overlay wb3-question-label-overlay" data-question-label-overlay><section class="wb3-question-label-dialog" role="dialog" aria-modal="true" aria-labelledby="wb3QuestionLabelTitle">
       <header><span>${icons.tag}</span><div><h3 id="wb3QuestionLabelTitle">编辑题目标签</h3><p>系统标签从飞象标签库选择，自定义标签由你自由创建</p></div><button type="button" data-close-question-label-editor aria-label="关闭">×</button></header>
       <div class="wb3-question-label-editor-body">
-        ${questionLabelDropdownMarkup('curriculum', '阶段·科目', Object.keys(curriculumCatalog), questionLabelDraft.curriculumTags, { formatter: curriculumTagLabel })}
+        ${questionLabelDropdownMarkup('curriculum', '阶段·科目', Object.keys(curriculumCatalog), questionLabelDraft.curriculumTags, { multiple: false, formatter: curriculumTagLabel })}
         ${questionLabelDropdownMarkup('type', '题型', typeOptions, questionLabelDraft.typeTags)}
         ${questionLabelDropdownMarkup('difficulty', '难度', difficultyOptions, [questionLabelDraft.difficulty], { multiple: false })}
         ${questionLabelDropdownMarkup('knowledge', '知识点', knowledgeOptions, questionLabelDraft.knowledgeTags)}
@@ -3211,22 +3211,24 @@
           questionLabelDraft.difficulty = value
           questionLabelDropdownOpen = ''
           questionLabelDropdownQuery = ''
+        } else if (kind === 'curriculum') {
+          questionLabelDraft.curriculumTags = [value]
+          const allowedKnowledge = knowledgeOptionsForCurriculums(questionLabelDraft.curriculumTags)
+          const compatibleKnowledge = questionLabelDraft.knowledgeTags.filter((tag) => allowedKnowledge.includes(tag))
+          if (compatibleKnowledge.length !== questionLabelDraft.knowledgeTags.length) tagFeedback = '已移除与当前阶段·科目不匹配的知识点'
+          questionLabelDraft.knowledgeTags = compatibleKnowledge
+          questionLabelDropdownOpen = ''
+          questionLabelDropdownQuery = ''
         } else {
           const key = kind === 'curriculum' ? 'curriculumTags' : kind === 'type' ? 'typeTags' : kind === 'knowledge' ? 'knowledgeTags' : kind === 'custom' ? 'customTags' : ''
           if (!key) return
           const current = [...questionLabelDraft[key]]
           const selected = current.includes(value)
-          if (selected && ['curriculumTags', 'typeTags'].includes(key) && current.length === 1) {
-            showToast(key === 'curriculumTags' ? '至少保留一个阶段·科目标签' : '至少保留一个题型标签')
+          if (selected && key === 'typeTags' && current.length === 1) {
+            showToast('至少保留一个题型标签')
             return
           }
           questionLabelDraft[key] = selected ? current.filter((item) => item !== value) : [...current, value]
-          if (key === 'curriculumTags') {
-            const allowedKnowledge = knowledgeOptionsForCurriculums(questionLabelDraft.curriculumTags)
-            const compatibleKnowledge = questionLabelDraft.knowledgeTags.filter((tag) => allowedKnowledge.includes(tag))
-            if (compatibleKnowledge.length !== questionLabelDraft.knowledgeTags.length) tagFeedback = '已移除与当前阶段·科目不匹配的知识点'
-            questionLabelDraft.knowledgeTags = compatibleKnowledge
-          }
         }
         renderPreservingResultScroll()
         if (questionLabelDropdownOpen) window.requestAnimationFrame(() => {
