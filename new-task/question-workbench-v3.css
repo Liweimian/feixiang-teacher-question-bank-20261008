@@ -740,7 +740,7 @@ body.fx-question-workbench-v3-open { overflow: hidden; }
 .wb3-personal-tag-manager-empty p { max-width: 280px; font-size: 10px; line-height: 1.5; }
 .wb3-bulk-label-editor-body { min-height: 0; display: grid; gap: 14px; overflow: auto; padding: 16px 20px 18px; }
 .wb3-bulk-overwrite-modes { min-width: 0; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
-.wb3-bulk-overwrite-card { min-width: 0; min-height: 78px; display: grid; grid-template-columns: 18px minmax(0,1fr); align-items: start; gap: 9px; padding: 12px; border: 1px solid var(--wb3-line); border-radius: 10px; background: #fff; cursor: pointer; transition: .15s ease; }
+.wb3-bulk-overwrite-card { min-width: 0; min-height: 48px; display: grid; grid-template-columns: 18px minmax(0,1fr); align-items: center; gap: 9px; padding: 12px; border: 1px solid var(--wb3-line); border-radius: 10px; background: #fff; cursor: pointer; transition: .15s ease; }
 .wb3-bulk-overwrite-card:hover { border-color: var(--wb3-green); }
 .wb3-bulk-overwrite-card.active { border-color: var(--wb3-green); background: var(--wb3-soft); box-shadow: 0 0 0 2px rgba(31,125,83,.07); }
 .wb3-bulk-overwrite-card.disabled { cursor: not-allowed; opacity: .58; }

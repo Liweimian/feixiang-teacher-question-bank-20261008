@@ -2722,14 +2722,14 @@
       ? `将统一覆盖所选题目的${enabledKinds.join('和')}`
       : hasEnabledScope ? '请为已勾选的类型选择至少一个标签' : '请勾选要统一设置的标签类型；未勾选的保持不变'
     return `<div class="wb3-overlay wb3-personal-tag-overlay" data-personal-tag-overlay><section class="wb3-personal-tag-dialog" role="dialog" aria-modal="true" aria-labelledby="wb3PersonalTagTitle">
-      <header><span>${icons.tag}</span><div><h3 id="wb3PersonalTagTitle">批量设置标签</h3><p>已选择 ${targetCount} 道题。仅勾选的标签类型会被统一设置，未勾选的保持不变。</p></div><button type="button" data-close-personal-tag aria-label="关闭">×</button></header>
+      <header><span>${icons.tag}</span><div><h3 id="wb3PersonalTagTitle">批量编辑标签</h3><p>已选择 ${targetCount} 道题。仅勾选的标签类型会被统一设置，未勾选的保持不变。</p></div><button type="button" data-close-personal-tag aria-label="关闭">×</button></header>
       <div class="wb3-bulk-label-editor-body">
         <div class="wb3-bulk-overwrite-modes" role="group" aria-label="选择要设置的标签类型">
-          <label class="wb3-bulk-overwrite-card ${bulkSetCurriculumEnabled ? 'active' : ''}"><input type="checkbox" data-bulk-label-scope="curriculum" ${bulkSetCurriculumEnabled ? 'checked' : ''}><span><b>设置阶段·科目</b><small>修改后必须同时设置对应题型和知识点</small></span></label>
-          <label class="wb3-bulk-overwrite-card ${bulkSetTypeEnabled ? 'active' : ''}"><input type="checkbox" data-bulk-label-scope="type" ${bulkSetTypeEnabled ? 'checked' : ''}><span><b>设置题型</b><small>${mixedCurriculum ? '所选题目阶段·科目不一致，将联动设置阶段·科目和知识点' : '可多选，使用当前阶段·科目的候选'}</small></span></label>
-          <label class="wb3-bulk-overwrite-card ${bulkSetDifficultyEnabled ? 'active' : ''}"><input type="checkbox" data-bulk-label-scope="difficulty" ${bulkSetDifficultyEnabled ? 'checked' : ''}><span><b>设置难度</b><small>单选，统一覆盖所选题目的原难度</small></span></label>
-          <label class="wb3-bulk-overwrite-card ${bulkSetKnowledgeEnabled ? 'active' : ''}"><input type="checkbox" data-bulk-label-scope="knowledge" ${bulkSetKnowledgeEnabled ? 'checked' : ''}><span><b>设置知识点</b><small>${mixedCurriculum ? '所选题目阶段·科目不一致，将联动设置阶段·科目和题型' : '可多选，使用当前阶段·科目的候选'}</small></span></label>
-          <label class="wb3-bulk-overwrite-card ${bulkSetCustomEnabled ? 'active' : ''}"><input type="checkbox" data-bulk-label-scope="custom" ${bulkSetCustomEnabled ? 'checked' : ''}><span><b>设置自定义标签</b><small>勾选后，统一覆盖所选题目的原自定义标签</small></span></label>
+          <label class="wb3-bulk-overwrite-card ${bulkSetCurriculumEnabled ? 'active' : ''}"><input type="checkbox" data-bulk-label-scope="curriculum" ${bulkSetCurriculumEnabled ? 'checked' : ''}><span><b>阶段·科目</b></span></label>
+          <label class="wb3-bulk-overwrite-card ${bulkSetTypeEnabled ? 'active' : ''}"><input type="checkbox" data-bulk-label-scope="type" ${bulkSetTypeEnabled ? 'checked' : ''}><span><b>题型</b></span></label>
+          <label class="wb3-bulk-overwrite-card ${bulkSetDifficultyEnabled ? 'active' : ''}"><input type="checkbox" data-bulk-label-scope="difficulty" ${bulkSetDifficultyEnabled ? 'checked' : ''}><span><b>难度</b></span></label>
+          <label class="wb3-bulk-overwrite-card ${bulkSetKnowledgeEnabled ? 'active' : ''}"><input type="checkbox" data-bulk-label-scope="knowledge" ${bulkSetKnowledgeEnabled ? 'checked' : ''}><span><b>知识点</b></span></label>
+          <label class="wb3-bulk-overwrite-card ${bulkSetCustomEnabled ? 'active' : ''}"><input type="checkbox" data-bulk-label-scope="custom" ${bulkSetCustomEnabled ? 'checked' : ''}><span><b>自定义标签</b></span></label>
         </div>
         <div class="wb3-bulk-overwrite-fields">
           ${bulkSetCurriculumEnabled ? `<section class="wb3-bulk-overwrite-field"><header><div><b>选择阶段·科目</b><span>单选</span></div><em>将覆盖原阶段·科目</em></header>${bulkDropdownMarkup('curriculum', '阶段·科目', Object.keys(curriculumCatalog), bulkCurriculumValue ? [bulkCurriculumValue] : [], { multiple: false, formatter: curriculumTagLabel })}${bulkCurriculumValue ? '' : '<p class="wb3-bulk-overwrite-error">请选择一个阶段·科目</p>'}</section>` : ''}
