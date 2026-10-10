@@ -393,6 +393,7 @@
   let questionLabelEditorId = ''
   let questionLabelEditorFocus = 'curriculum'
   let questionLabelDraft = null
+  let questionLabelCurriculumSnapshots = new Map()
   let questionLabelDropdownOpen = ''
   let questionLabelDropdownQuery = ''
   let adaptRequest = null
@@ -2385,6 +2386,10 @@
       knowledgeTags: [...questionKnowledgeTags(question)],
       customTags: [...(question.customTags || [])],
     }
+    questionLabelCurriculumSnapshots = new Map([[questionLabelDraft.curriculumTags[0], {
+      typeTags: [...questionLabelDraft.typeTags],
+      knowledgeTags: [...questionLabelDraft.knowledgeTags],
+    }]])
     renderPreservingResultScroll()
     window.requestAnimationFrame(() => {
       root?.querySelector(`[data-question-label-group="${questionLabelEditorFocus}"]`)?.scrollIntoView({ block: 'nearest' })
@@ -2395,6 +2400,7 @@
     questionLabelEditorId = ''
     questionLabelEditorFocus = 'curriculum'
     questionLabelDraft = null
+    questionLabelCurriculumSnapshots = new Map()
     questionLabelDropdownOpen = ''
     questionLabelDropdownQuery = ''
     renderPreservingResultScroll()
@@ -2443,6 +2449,7 @@
     questionLabelEditorId = ''
     questionLabelEditorFocus = 'curriculum'
     questionLabelDraft = null
+    questionLabelCurriculumSnapshots = new Map()
     questionLabelDropdownOpen = ''
     questionLabelDropdownQuery = ''
     renderPreservingResultScroll()
@@ -2451,6 +2458,10 @@
 
   function questionLabelOptionMarkup(group, value, selected, label = value) {
     return `<button type="button" class="${selected ? 'selected' : ''}" data-toggle-question-label="${escapeHtml(value)}" data-question-label-kind="${group}" data-question-label-option-text="${escapeHtml(String(label).toLowerCase())}" aria-pressed="${selected}"><span>${escapeHtml(label)}</span>${selected ? icons.check : ''}</button>`
+  }
+
+  function questionCustomTagOptionMarkup(value, selected) {
+    return `<span class="wb3-question-custom-tag-option"><button type="button" class="${selected ? 'selected' : ''}" data-toggle-question-label="${escapeHtml(value)}" data-question-label-kind="custom" aria-pressed="${selected}"><span>${escapeHtml(value)}</span>${selected ? icons.check : ''}</button><button type="button" class="wb3-question-custom-tag-delete" data-delete-personal-tag="${escapeHtml(value)}" aria-label="删除自定义标签${escapeHtml(value)}" title="删除后将从所有题目移除">×</button></span>`
   }
 
   function questionLabelDropdownMarkup(group, title, options, selectedValues, { multiple = true, formatter = (value) => value } = {}) {
@@ -2490,7 +2501,9 @@
   function questionLabelEditorMarkup() {
     const question = personalQuestions.find((item) => item.id === questionLabelEditorId)
     if (!question || !questionLabelDraft) return ''
-    const typeOptions = [...new Set([...SYSTEM_QUESTION_TYPE_TAGS, ...questionLabelDraft.typeTags])]
+    const activeCurriculum = questionLabelDraft.curriculumTags[0]
+    const curriculumTypeOptions = bankQuestions.filter((item) => item.curriculum === activeCurriculum).map((item) => item.type).filter(Boolean)
+    const typeOptions = [...new Set([...curriculumTypeOptions, ...questionLabelDraft.typeTags])]
     const difficultyOptions = [...new Set([...bankQuestions.map((item) => item.difficulty).filter(Boolean), questionLabelDraft.difficulty])]
     const knowledgeOptions = [...new Set([
       ...knowledgeOptionsForCurriculums(questionLabelDraft.curriculumTags),
@@ -2504,7 +2517,7 @@
         ${questionLabelDropdownMarkup('type', '题型', typeOptions, questionLabelDraft.typeTags)}
         ${questionLabelDropdownMarkup('difficulty', '难度', difficultyOptions, [questionLabelDraft.difficulty], { multiple: false })}
         ${questionLabelDropdownMarkup('knowledge', '知识点', knowledgeOptions, questionLabelDraft.knowledgeTags)}
-        <section class="wb3-question-label-editor-group ${questionLabelEditorFocus === 'custom' ? 'focused' : ''} custom" data-question-label-group="custom"><header><b>自定义标签</b><span>自由创建</span></header><div>${customOptions.map((value) => questionLabelOptionMarkup('custom', value, questionLabelDraft.customTags.includes(value))).join('')}<label class="wb3-custom-tag-compose"><span aria-hidden="true">${icons.plus}</span><input id="wb3NewQuestionCustomTag" maxlength="12" placeholder="新建标签，回车添加" aria-label="新建自定义标签"></label></div></section>
+        <section class="wb3-question-label-editor-group ${questionLabelEditorFocus === 'custom' ? 'focused' : ''} custom" data-question-label-group="custom"><header><b>自定义标签</b><span>自由创建，删除后同步解除所有题目关联</span></header><div>${customOptions.map((value) => questionCustomTagOptionMarkup(value, questionLabelDraft.customTags.includes(value))).join('')}<label class="wb3-custom-tag-compose"><span aria-hidden="true">${icons.plus}</span><input id="wb3NewQuestionCustomTag" maxlength="12" placeholder="新建标签，回车添加" aria-label="新建自定义标签"></label></div></section>
       </div>
       <footer><span>人工修改后，AI 不再自动覆盖这些标签</span><button type="button" data-close-question-label-editor>取消</button><button type="button" class="primary" data-save-question-labels>保存</button></footer>
     </section></div>`
@@ -3212,11 +3225,26 @@
           questionLabelDropdownOpen = ''
           questionLabelDropdownQuery = ''
         } else if (kind === 'curriculum') {
+          const previousCurriculum = questionLabelDraft.curriculumTags[0]
+          if (previousCurriculum) {
+            questionLabelCurriculumSnapshots.set(previousCurriculum, {
+              typeTags: [...questionLabelDraft.typeTags],
+              knowledgeTags: [...questionLabelDraft.knowledgeTags],
+            })
+          }
           questionLabelDraft.curriculumTags = [value]
-          const allowedKnowledge = knowledgeOptionsForCurriculums(questionLabelDraft.curriculumTags)
-          const compatibleKnowledge = questionLabelDraft.knowledgeTags.filter((tag) => allowedKnowledge.includes(tag))
-          if (compatibleKnowledge.length !== questionLabelDraft.knowledgeTags.length) tagFeedback = '已移除与当前阶段·科目不匹配的知识点'
-          questionLabelDraft.knowledgeTags = compatibleKnowledge
+          const savedLabels = questionLabelCurriculumSnapshots.get(value)
+          if (savedLabels) {
+            questionLabelDraft.typeTags = [...savedLabels.typeTags]
+            questionLabelDraft.knowledgeTags = [...savedLabels.knowledgeTags]
+            tagFeedback = '已恢复该阶段·科目上次选择的题型和知识点'
+          } else {
+            const availableTypes = [...new Set(bankQuestions.filter((item) => item.curriculum === value).map((item) => item.type).filter(Boolean))]
+            const compatibleTypes = questionLabelDraft.typeTags.filter((tag) => availableTypes.includes(tag))
+            questionLabelDraft.typeTags = compatibleTypes.length ? compatibleTypes : availableTypes.slice(0, 1)
+            questionLabelDraft.knowledgeTags = []
+            tagFeedback = '已切换对应题型和知识点，请按需调整'
+          }
           questionLabelDropdownOpen = ''
           questionLabelDropdownQuery = ''
         } else {

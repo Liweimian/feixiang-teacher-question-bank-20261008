@@ -772,13 +772,14 @@ body.fx-question-workbench-v3-open { overflow: hidden; }
 .wb3-question-label-editor-field > header b,.wb3-question-label-editor-group > header b { color: var(--wb3-ink); font-size: 12px; }
 .wb3-question-label-editor-field > header span,.wb3-question-label-editor-group > header span { color: var(--wb3-muted); font-size: 10px; }
 .wb3-question-label-select { position: relative; }
+.wb3-question-label-select.open { z-index: 20; }
 .wb3-question-label-select-trigger { width: 100%; height: 36px; display: flex; align-items: center; gap: 8px; padding: 0 11px; border: 1px solid var(--wb3-line); border-radius: 8px; background: #fff; color: var(--wb3-ink); text-align: left; }
 .wb3-question-label-select-trigger:hover,.wb3-question-label-select.open .wb3-question-label-select-trigger { border-color: var(--wb3-green); }
 .wb3-question-label-select-trigger > span { min-width: 0; flex: 1; overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .wb3-question-label-select-trigger > span.placeholder { color: var(--wb3-muted); }
 .wb3-question-label-select-trigger > i { flex: none; color: var(--wb3-muted); font-size: 13px; font-style: normal; transition: transform .15s ease; }
 .wb3-question-label-select.open .wb3-question-label-select-trigger > i { transform: rotate(180deg); }
-.wb3-question-label-dropdown { position: relative; z-index: 3; margin-top: 5px; padding: 8px; border: 1px solid var(--wb3-line); border-radius: 8px; background: #fff; box-shadow: 0 8px 22px rgba(7,49,35,.1); }
+.wb3-question-label-dropdown { position: absolute; z-index: 20; top: calc(100% + 5px); right: 0; left: 0; padding: 8px; border: 1px solid var(--wb3-line); border-radius: 8px; background: #fff; box-shadow: 0 8px 22px rgba(7,49,35,.16); }
 .wb3-question-label-dropdown > label { height: 32px; display: flex; align-items: center; gap: 7px; padding: 0 9px; border: 1px solid var(--wb3-line); border-radius: 7px; color: var(--wb3-muted); }
 .wb3-question-label-dropdown > label:focus-within { border-color: var(--wb3-green); box-shadow: 0 0 0 2px rgba(31,125,83,.08); }
 .wb3-question-label-dropdown > label svg { width: 14px; height: 14px; flex: none; }
@@ -797,6 +798,12 @@ body.fx-question-workbench-v3-open { overflow: hidden; }
 .wb3-question-label-editor-group > div > button { min-height: 28px; display: inline-flex; align-items: center; gap: 4px; padding: 0 9px; border: 1px solid var(--wb3-line); border-radius: 7px; background: #fff; color: var(--wb3-ink); font-size: 11px; }
 .wb3-question-label-editor-group > div > button:hover,.wb3-question-label-editor-group > div > button.selected { border-color: var(--wb3-green); background: var(--wb3-soft); color: var(--wb3-green); }
 .wb3-question-label-editor-group > div > button svg { width: 12px; height: 12px; }
+.wb3-question-custom-tag-option { position:relative; display:inline-flex; padding-top:4px; }
+.wb3-question-custom-tag-option > button:first-child { min-height:28px; display:inline-flex; align-items:center; gap:4px; padding:0 22px 0 9px; border:1px solid var(--wb3-line); border-radius:7px; background:#fff; color:var(--wb3-ink); font-size:11px; }
+.wb3-question-custom-tag-option > button:first-child:hover,.wb3-question-custom-tag-option > button:first-child.selected { border-color:var(--wb3-green); background:var(--wb3-soft); color:var(--wb3-green); }
+.wb3-question-custom-tag-option > button:first-child svg { width:12px; height:12px; }
+.wb3-question-custom-tag-delete { position:absolute; top:0; right:2px; width:17px; height:17px; display:grid; place-items:center; padding:0; border:1px solid var(--wb3-line); border-radius:50%; background:#fff; color:var(--wb3-muted); font-size:12px; line-height:1; }
+.wb3-question-custom-tag-delete:hover { border-color:#d6aaa3; background:#fff6f4; color:#9d4338; }
 .wb3-question-label-editor-group > div > p { width: 100%; padding: 8px 0; color: var(--wb3-muted); font-size: 11px; text-align: center; }
 .wb3-question-label-editor-group.custom { background: var(--wb3-soft); }
 .wb3-custom-tag-compose { width: 196px; height: 28px; display: inline-flex; align-items: center; gap: 5px; padding: 0 8px; border: 1px dashed var(--wb3-green); border-radius: 7px; background: #fff; color: var(--wb3-green); cursor: text; }
