@@ -168,6 +168,7 @@
         ? [question.knowledge, '数量关系']
         : [question.knowledge],
     customTags: index % 2 === 0 ? ['重点复习'] : ['计算专项'],
+    recordedAt: Date.parse('2026-09-06T16:27:00+08:00'),
   }))
   let personalTagCatalog = ['重点复习', '计算专项']
   let aiImportRecords = [
@@ -1347,9 +1348,11 @@
 
   function personalLibrarySubtabsMarkup() {
     const processingCount = aiImportRecords.filter((record) => record.status === 'processing').length
-    const unreadCount = aiImportRecords.filter((record) => record.status === 'completed' && record.unread).length
-    const statusText = processingCount ? `，${processingCount}个任务处理中` : unreadCount ? `，${unreadCount}个任务已完成` : ''
-    return `<div class="wb3-personal-subtabs"><div class="wb3-personal-tabs" role="tablist" aria-label="我的题库内容"><button type="button" role="tab" data-personal-library="questions" aria-selected="${personalLibraryMode === 'questions'}" class="${personalLibraryMode === 'questions' ? 'active' : ''}">试题</button><button type="button" role="tab" data-personal-library="papers" aria-selected="${personalLibraryMode === 'papers'}" class="${personalLibraryMode === 'papers' ? 'active' : ''}">题单</button></div><div class="wb3-personal-import-action"><span class="wb3-personal-import-hint">上传试卷，AI 自动识别并录入题库</span><button type="button" class="wb3-personal-header-import wb3-personal-subtab-import ${aiRecordingDrawerOpen ? 'is-open' : ''}" data-open-personal-import aria-label="上传文件${statusText}" aria-expanded="${aiRecordingDrawerOpen}">${icons.upload}<span>上传文件</span>${processingCount ? `<em class="wb3-ai-recording-badge processing">${Math.min(processingCount, 99)}</em>` : unreadCount ? `<em class="wb3-ai-recording-badge completed">${Math.min(unreadCount, 99)}</em>` : ''}</button></div></div>`
+    const statusText = processingCount ? `，${processingCount}个文件正在AI录题` : ''
+    const importAction = personalLibraryMode === 'questions'
+      ? `<div class="wb3-personal-import-action"><span class="wb3-personal-import-hint">上传试卷，AI 自动识别并录入题库</span><button type="button" class="wb3-personal-header-import wb3-personal-subtab-import ${aiRecordingDrawerOpen ? 'is-open' : ''}" data-open-personal-import aria-label="上传文件${statusText}" aria-expanded="${aiRecordingDrawerOpen}">${icons.upload}<span>上传文件</span>${processingCount ? `<em class="wb3-ai-recording-badge processing">${Math.min(processingCount, 99)}</em>` : ''}</button></div>`
+      : ''
+    return `<div class="wb3-personal-subtabs"><div class="wb3-personal-tabs" role="tablist" aria-label="我的题库内容"><button type="button" role="tab" data-personal-library="questions" aria-selected="${personalLibraryMode === 'questions'}" class="${personalLibraryMode === 'questions' ? 'active' : ''}">试题</button><button type="button" role="tab" data-personal-library="papers" aria-selected="${personalLibraryMode === 'papers'}" class="${personalLibraryMode === 'papers' ? 'active' : ''}">题单</button></div>${importAction}</div>`
   }
 
   function personalQuestionMatchesCollection(question, collection = personalCollection) {
@@ -1404,12 +1407,13 @@
 
   function currentBankQuestions() {
     if (questionSource === 'personal') {
+      const byLatestRecording = (questions) => [...questions].sort((left, right) => (Number(right.recordedAt) || 0) - (Number(left.recordedAt) || 0))
       const importRecord = currentPersonalImportRecord()
       if (importRecord) {
         const importedIds = new Set((importRecord.questions || []).map((question) => question.id))
-        return personalQuestions.filter((question) => importedIds.has(question.id))
+        return byLatestRecording(personalQuestions.filter((question) => importedIds.has(question.id)))
       }
-      return personalQuestions.filter((question) => personalQuestionMatchesCollection(question))
+      return byLatestRecording(personalQuestions.filter((question) => personalQuestionMatchesCollection(question)))
     }
     return bankQuestions.filter((question) => question.curriculum === curriculumKey)
   }
@@ -1826,7 +1830,7 @@
   }
 
   function aiRecordingDrawerMarkup() {
-    if (!aiRecordingDrawerOpen || importWorkspaceView !== 'library' || questionSource !== 'personal') return ''
+    if (!aiRecordingDrawerOpen || importWorkspaceView !== 'library' || questionSource !== 'personal' || personalLibraryMode !== 'questions') return ''
     const processingCount = aiImportRecords.filter((record) => record.status === 'processing').length
     return `<div class="wb3-ai-recording-layer">
       <button type="button" class="wb3-ai-recording-mask" data-close-ai-recording aria-label="关闭上传文件"></button>
@@ -1971,6 +1975,7 @@
   function completeImportRecord(recordId) {
     const record = aiImportRecords.find((item) => item.id === recordId)
     if (!record || record.status !== 'processing') return
+    const recordedAt = Date.now()
     record.questions = bankQuestions.slice(0, 5).map((question, index) => ({
       ...question,
       id: `${recordId}-q${index + 1}`,
@@ -1981,6 +1986,7 @@
       difficultyTags: [question.difficulty],
       knowledgeTags: [question.knowledge],
       customTags: [],
+      recordedAt,
     }))
     record.status = 'completed'
     record.stage = '解析完成'
@@ -3537,6 +3543,7 @@
         personalImportRecordViewId = ''
         personalImportReturnScrollTop = 0
         personalLibraryMode = personalLibraryTab.dataset.personalLibrary === 'papers' ? 'papers' : 'questions'
+        if (personalLibraryMode === 'papers') aiRecordingDrawerOpen = false
         previewKnowledgePaperId = ''
         render()
         return
