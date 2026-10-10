@@ -2382,7 +2382,7 @@
     questionLabelDraft = {
       curriculumTags: [...questionCurriculumTags(question)],
       typeTags: [...questionTypeTags(question)],
-      difficultyTags: [...questionDifficultyTags(question)],
+      difficulty: questionDifficultyTags(question)[0] || '中等',
       knowledgeTags: [...questionKnowledgeTags(question)],
       customTags: [...(question.customTags || [])],
     }
@@ -2411,6 +2411,7 @@
     if (!question || !questionLabelDraft) return
     if (!questionLabelDraft.curriculumTags.length) { showToast('至少保留一个阶段·科目标签'); return }
     if (!questionLabelDraft.typeTags.length) { showToast('至少保留一个题型标签'); return }
+    if (!questionLabelDraft.difficulty) { showToast('请选择难度标签'); return }
     const allowedKnowledge = knowledgeOptionsForCurriculums(questionLabelDraft.curriculumTags)
     const nextKnowledgeTags = questionLabelDraft.knowledgeTags.filter((tag) => allowedKnowledge.includes(tag))
     const updates = {
@@ -2458,10 +2459,6 @@
 
   function questionLabelOptionMarkup(group, value, selected, label = value) {
     return `<button type="button" class="${selected ? 'selected' : ''}" data-toggle-question-label="${escapeHtml(value)}" data-question-label-kind="${group}" data-question-label-option-text="${escapeHtml(String(label).toLowerCase())}" aria-pressed="${selected}"><span>${escapeHtml(label)}</span>${selected ? icons.check : ''}</button>`
-  }
-
-  function questionCustomTagOptionMarkup(value, selected) {
-    return `<span class="wb3-question-custom-tag-option"><button type="button" class="${selected ? 'selected' : ''}" data-toggle-question-label="${escapeHtml(value)}" data-question-label-kind="custom" aria-pressed="${selected}"><span>${escapeHtml(value)}</span>${selected ? icons.check : ''}</button><button type="button" class="wb3-question-custom-tag-delete" data-delete-personal-tag="${escapeHtml(value)}" aria-label="删除自定义标签${escapeHtml(value)}" title="删除后将从所有题目移除">×</button></span>`
   }
 
   function questionLabelDropdownMarkup(group, title, options, selectedValues, { multiple = true, searchable = true, formatter = (value) => value } = {}) {
@@ -2517,7 +2514,7 @@
         ${questionLabelDropdownMarkup('type', '题型', typeOptions, questionLabelDraft.typeTags)}
         ${questionLabelDropdownMarkup('difficulty', '难度', difficultyOptions, [questionLabelDraft.difficulty], { multiple: false })}
         ${questionLabelDropdownMarkup('knowledge', '知识点', knowledgeOptions, questionLabelDraft.knowledgeTags)}
-        <section class="wb3-question-label-editor-group ${questionLabelEditorFocus === 'custom' ? 'focused' : ''} custom" data-question-label-group="custom"><header><b>自定义标签</b><span>自由创建，删除后同步解除所有题目关联</span></header><div>${customOptions.map((value) => questionCustomTagOptionMarkup(value, questionLabelDraft.customTags.includes(value))).join('')}<label class="wb3-custom-tag-compose"><span aria-hidden="true">${icons.plus}</span><input id="wb3NewQuestionCustomTag" maxlength="12" placeholder="新建标签，回车添加" aria-label="新建自定义标签"></label></div></section>
+        <section class="wb3-question-label-editor-group ${questionLabelEditorFocus === 'custom' ? 'focused' : ''} custom" data-question-label-group="custom"><header><b>自定义标签</b><span>自由创建</span></header><div>${customOptions.map((value) => questionLabelOptionMarkup('custom', value, questionLabelDraft.customTags.includes(value))).join('')}<label class="wb3-custom-tag-compose"><span aria-hidden="true">${icons.plus}</span><input id="wb3NewQuestionCustomTag" maxlength="12" placeholder="新建标签，回车添加" aria-label="新建自定义标签"></label></div></section>
       </div>
       <footer><span>人工修改后，AI 不再自动覆盖这些标签</span><button type="button" data-close-question-label-editor>取消</button><button type="button" class="primary" data-save-question-labels>保存</button></footer>
     </section></div>`
