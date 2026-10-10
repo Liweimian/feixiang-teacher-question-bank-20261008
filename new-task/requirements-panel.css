@@ -55,6 +55,7 @@
   cursor: grab;
   touch-action: none;
 }
+.prd-drawer-head-compact { padding-bottom: 16px; }
 .prd-drawer-head:active,.prd-drawer.is-dragging .prd-drawer-head { cursor: grabbing; }
 .prd-drawer-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .prd-drawer-title small { display: block; margin-bottom: 5px; color: #087a55; font-size: 11px; font-weight: 750; letter-spacing: .08em; }
