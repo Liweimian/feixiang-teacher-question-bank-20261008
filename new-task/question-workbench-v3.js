@@ -1585,7 +1585,7 @@
     const difficultyGroup = personalQuestionLabelGroupMarkup(question, 'difficulty', '难度', questionDifficultyTags(question))
     const knowledgeGroup = personalQuestionLabelGroupMarkup(question, 'knowledge', '知识点', questionKnowledgeTags(question))
     const customGroup = personalQuestionLabelGroupMarkup(question, 'custom', '自定义标签', question.customTags || [], { emptyText: '+ 标签' })
-    return `<div class="wb3-question-labels"><div class="wb3-question-label-stream">${curriculumGroup}${typeGroup}${difficultyGroup}${knowledgeGroup}${customGroup}</div><button type="button" class="wb3-question-label-edit" data-open-question-label-editor="${escapeHtml(question.id)}" data-label-editor-focus="curriculum" aria-label="编辑题目标签" title="编辑题目标签">${icons.tag}</button>${actionsMarkup}</div>`
+    return `<div class="wb3-question-labels"><div class="wb3-question-label-stream">${curriculumGroup}${typeGroup}${difficultyGroup}${knowledgeGroup}${customGroup}</div><button type="button" class="wb3-question-label-edit" data-open-question-label-editor="${escapeHtml(question.id)}" data-label-editor-focus="" aria-label="编辑题目标签" title="编辑题目标签">${icons.tag}</button>${actionsMarkup}</div>`
   }
 
   function questionCardMarkup(question, addedMap) {
@@ -2372,12 +2372,12 @@
     })
   }
 
-  function openQuestionLabelEditor(questionId, focus = 'curriculum') {
+  function openQuestionLabelEditor(questionId, focus = '') {
     const question = personalQuestions.find((item) => item.id === questionId)
     if (!question) return
     questionLabelEditorId = question.id
-    questionLabelEditorFocus = ['curriculum', 'type', 'difficulty', 'knowledge', 'custom'].includes(focus) ? focus : 'curriculum'
-    questionLabelDropdownOpen = questionLabelEditorFocus === 'custom' ? '' : questionLabelEditorFocus
+    questionLabelEditorFocus = ['curriculum', 'type', 'difficulty', 'knowledge', 'custom'].includes(focus) ? focus : ''
+    questionLabelDropdownOpen = questionLabelEditorFocus && questionLabelEditorFocus !== 'custom' ? questionLabelEditorFocus : ''
     questionLabelDropdownQuery = ''
     questionLabelDraft = {
       curriculumTags: [...questionCurriculumTags(question)],
@@ -2392,7 +2392,7 @@
     }]])
     renderPreservingResultScroll()
     window.requestAnimationFrame(() => {
-      root?.querySelector(`[data-question-label-group="${questionLabelEditorFocus}"]`)?.scrollIntoView({ block: 'nearest' })
+      if (questionLabelEditorFocus) root?.querySelector(`[data-question-label-group="${questionLabelEditorFocus}"]`)?.scrollIntoView({ block: 'nearest' })
     })
   }
 
@@ -2464,13 +2464,13 @@
     return `<span class="wb3-question-custom-tag-option"><button type="button" class="${selected ? 'selected' : ''}" data-toggle-question-label="${escapeHtml(value)}" data-question-label-kind="custom" aria-pressed="${selected}"><span>${escapeHtml(value)}</span>${selected ? icons.check : ''}</button><button type="button" class="wb3-question-custom-tag-delete" data-delete-personal-tag="${escapeHtml(value)}" aria-label="删除自定义标签${escapeHtml(value)}" title="删除后将从所有题目移除">×</button></span>`
   }
 
-  function questionLabelDropdownMarkup(group, title, options, selectedValues, { multiple = true, formatter = (value) => value } = {}) {
+  function questionLabelDropdownMarkup(group, title, options, selectedValues, { multiple = true, searchable = true, formatter = (value) => value } = {}) {
     const isOpen = questionLabelDropdownOpen === group
     const selectedLabels = selectedValues.map(formatter)
     const selectedSummary = selectedLabels.length
       ? `${selectedLabels.slice(0, 2).join('、')}${selectedLabels.length > 2 ? ` +${selectedLabels.length - 2}` : ''}`
       : `请选择${title}`
-    const query = isOpen ? questionLabelDropdownQuery.trim().toLowerCase() : ''
+    const query = isOpen && searchable ? questionLabelDropdownQuery.trim().toLowerCase() : ''
     const matchedOptions = query ? options.filter((value) => String(formatter(value)).toLowerCase().includes(query)) : options
     const visibleOptions = matchedOptions.slice(0, 80)
     const optionMarkup = visibleOptions.map((value) => questionLabelOptionMarkup(group, value, selectedValues.includes(value), formatter(value))).join('')
@@ -2481,7 +2481,7 @@
       <header><b>${title}</b><span>${multiple ? '可多选' : '单选'}</span></header>
       <div class="wb3-question-label-select ${isOpen ? 'open' : ''}">
         <button type="button" class="wb3-question-label-select-trigger" data-toggle-question-label-dropdown="${group}" aria-expanded="${isOpen}"><span class="${selectedLabels.length ? '' : 'placeholder'}">${escapeHtml(selectedSummary)}</span><i aria-hidden="true">⌄</i></button>
-        ${isOpen ? `<div class="wb3-question-label-dropdown"><label>${icons.search}<input type="search" value="${escapeHtml(questionLabelDropdownQuery)}" data-question-label-dropdown-search="${group}" placeholder="搜索${title}" autocomplete="off"></label><div class="wb3-question-label-dropdown-meta">已选 ${selectedValues.length} 项 · 共 ${options.length} 项</div><div class="wb3-question-label-dropdown-options" role="listbox" aria-multiselectable="${multiple}">${optionMarkup || '<p class="wb3-question-label-dropdown-empty">没有匹配项</p>'}</div>${resultHint}</div>` : ''}
+        ${isOpen ? `<div class="wb3-question-label-dropdown">${searchable ? `<label>${icons.search}<input type="search" value="${escapeHtml(questionLabelDropdownQuery)}" data-question-label-dropdown-search="${group}" placeholder="搜索${title}" autocomplete="off"></label>` : ''}<div class="wb3-question-label-dropdown-meta">已选 ${selectedValues.length} 项 · 共 ${options.length} 项</div><div class="wb3-question-label-dropdown-options" role="listbox" aria-multiselectable="${multiple}">${optionMarkup || '<p class="wb3-question-label-dropdown-empty">没有匹配项</p>'}</div>${resultHint}</div>` : ''}
       </div>
     </section>`
   }
@@ -2513,7 +2513,7 @@
     return `<div class="wb3-overlay wb3-question-label-overlay" data-question-label-overlay><section class="wb3-question-label-dialog" role="dialog" aria-modal="true" aria-labelledby="wb3QuestionLabelTitle">
       <header><span>${icons.tag}</span><div><h3 id="wb3QuestionLabelTitle">编辑题目标签</h3><p>系统标签从飞象标签库选择，自定义标签由你自由创建</p></div><button type="button" data-close-question-label-editor aria-label="关闭">×</button></header>
       <div class="wb3-question-label-editor-body">
-        ${questionLabelDropdownMarkup('curriculum', '阶段·科目', Object.keys(curriculumCatalog), questionLabelDraft.curriculumTags, { multiple: false, formatter: curriculumTagLabel })}
+        ${questionLabelDropdownMarkup('curriculum', '阶段·科目', Object.keys(curriculumCatalog), questionLabelDraft.curriculumTags, { multiple: false, searchable: false, formatter: curriculumTagLabel })}
         ${questionLabelDropdownMarkup('type', '题型', typeOptions, questionLabelDraft.typeTags)}
         ${questionLabelDropdownMarkup('difficulty', '难度', difficultyOptions, [questionLabelDraft.difficulty], { multiple: false })}
         ${questionLabelDropdownMarkup('knowledge', '知识点', knowledgeOptions, questionLabelDraft.knowledgeTags)}
