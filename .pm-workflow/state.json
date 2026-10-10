@@ -1,0 +1,37 @@
+{
+  "projectName": "飞象题库工作台",
+  "currentStage": 2,
+  "stages": {
+    "0": {
+      "name": "需求澄清",
+      "status": "completed",
+      "completedAt": "2026-10-08T00:00:00+08:00",
+      "outputs": ["AGENT-HANDOFF.md"]
+    },
+    "1": {
+      "name": "Demo 创作",
+      "status": "completed",
+      "startedAt": "2026-10-08T00:00:00+08:00",
+      "completedAt": "2026-10-08T15:27:00+08:00",
+      "outputs": [
+        "new-task/workbench.html",
+        "new-task/question-workbench-v3.js",
+        "new-task/question-workbench-v3.css"
+      ],
+      "iterationCount": 34
+    },
+    "2": {
+      "name": "过稿文字",
+      "status": "completed",
+      "startedAt": "2026-10-10T00:00:00+08:00",
+      "completedAt": "2026-10-10T00:00:00+08:00",
+      "outputs": [
+        "new-task/requirements-panel.js",
+        "new-task/requirements-panel.css"
+      ]
+    }
+  },
+  "gitCommits": [],
+  "createdAt": "2026-10-08T00:00:00+08:00",
+  "updatedAt": "2026-10-10T23:00:00+08:00"
+}

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>从题库添加</title>
+  <link rel="stylesheet" href="./question-picker.css?v=20260914picker9">
+  <style>
+    .answer-panel p{margin:0}.answer-panel p+p{margin-top:5px;padding-top:5px;border-top:1px solid #dfeae4}
+    .picker-page-info{position:sticky;top:-12px;z-index:8;display:flex;align-items:center;gap:7px;margin:-12px -12px 10px;padding:8px 14px;border-bottom:1px solid #e5ece8;background:rgba(255,255,255,.96);backdrop-filter:blur(5px);color:#718179;font-size:10px}.picker-page-info span{padding:3px 6px;border-radius:4px;background:#e9f4ee;color:#087a55}.picker-page-info b{color:#3e574b;font-size:11px}.picker-page-info em{margin-left:auto;font-style:normal}
+    .picker-pagination{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:10px;padding:14px;border:1px solid #dce8e2;border-radius:10px;background:#f8fbf9;color:#62756b;font-size:11px}.picker-unlock{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:10px;padding:6px 0;color:#718179;font-size:11px}
+    .picker-pagination button,.picker-unlock button{height:30px;padding:0 12px;border:1px solid #b9d6c8;border-radius:7px;background:#fff;color:#087a55;cursor:pointer}.picker-pagination button:disabled{opacity:.4;cursor:not-allowed}
+    .picker-unlock>button{height:auto;padding:0;border:0;background:transparent;color:#087a55;font-weight:700;text-decoration:underline;text-underline-offset:2px}
+    .unlock-overlay{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:rgba(25,40,33,.28);backdrop-filter:blur(2px)}.unlock-dialog{width:330px;padding:22px;border-radius:14px;background:#fff;box-shadow:0 18px 50px rgba(20,45,34,.22);text-align:center}.unlock-dialog>span{width:42px;height:42px;display:grid;place-items:center;margin:0 auto;border-radius:50%;background:#e5f4ec;color:#087a55;font-size:20px}.unlock-dialog h3{margin:10px 0 6px;color:#263f34;font-size:16px}.unlock-dialog p{margin:0;color:#6d7d75;font-size:12px;line-height:1.6}.unlock-dialog p b{color:#087a55}.unlock-dialog>div{display:flex;justify-content:center;gap:8px;margin-top:17px}.unlock-dialog button{height:34px;padding:0 15px;border:1px solid #d4dfd9;border-radius:8px;background:#fff;color:#52645b;cursor:pointer}.unlock-dialog button.primary{border-color:#087a55;background:#087a55;color:#fff}
+  </style>
+</head>
+<body>
+  <main class="picker-shell">
+    <aside class="picker-sidebar">
+      <select id="curriculum" aria-label="学段和学科"></select>
+      <div id="chapterSubtabs" class="chapter-subtabs" role="tablist" aria-label="题库选题方式">
+        <button type="button" role="tab" data-browse="chapter" aria-selected="true" class="active">教材章节</button>
+        <button type="button" role="tab" data-browse="knowledge" aria-selected="false">知识点</button>
+      </div>
+      <div id="textbookPicker"></div>
+      <nav id="knowledgeTree" aria-label="章节或知识点"></nav>
+    </aside>
+    <section class="picker-main">
+      <header class="filter-bar">
+        <select id="typeFilter" aria-label="题型"><option>全部题型</option><option>选择题</option><option>填空题</option><option>解答题</option></select>
+        <select id="difficultyFilter" aria-label="难度"><option>全部难度</option><option>较易</option><option>基础</option><option>中等</option><option>提高</option><option>较难</option></select>
+        <label class="search-box"><span>⌕</span><input id="questionSearch" type="search" placeholder="搜索教材章节或题干关键词"></label>
+      </header>
+      <div class="question-list" id="questionList"></div>
+    </section>
+  </main>
+  <script src="./question-picker.js?v=20260914picker9"></script>
+</body>
+</html>

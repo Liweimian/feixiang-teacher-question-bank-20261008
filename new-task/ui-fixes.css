@@ -1,0 +1,251 @@
+/* Final shell calibration: history tasks stay readable without presentation-scale type. */
+.app-shell{font-size:14px}
+.app-shell .sidebar .brand-row img{width:100px;height:32px}
+.app-shell .sidebar .new-task{height:44px;font-size:14px}
+.app-shell .sidebar .knowledge-entry,.app-shell .sidebar .workbench-link{height:42px;font-size:14px}
+.app-shell .sidebar .section-title{font-size:13px}
+.app-shell .sidebar .workspace-name{font-size:13px}
+.app-shell .sidebar .task-item{height:38px;font-size:13px}
+.app-shell .sidebar .task-item small{font-size:11px}
+.app-shell .sidebar .account-trigger b{font-size:13px}
+.app-shell .sidebar .account-trigger small{font-size:11px}
+
+.conversation:not(.home-screen){font-size:14px}
+.conversation:not(.home-screen) .task-header{height:66px;padding:0 24px}
+.conversation:not(.home-screen) .task-header h1{font-size:19px;line-height:1.35}
+.conversation:not(.home-screen) .task-header span{margin-top:3px;font-size:12px}
+.conversation:not(.home-screen) .task-header button{padding:8px 13px;font-size:12px}
+.conversation:not(.home-screen) .message-column{width:min(820px,calc(100% - 52px));padding:28px 0 190px}
+.conversation:not(.home-screen) .message-scroll{scroll-padding-bottom:180px}
+.conversation:not(.home-screen) .user-message{padding:14px 17px;border-radius:14px;font-size:14px;line-height:1.65}
+.conversation:not(.home-screen) .assistant-message{margin-top:18px;font-size:14px;line-height:1.65}
+.conversation:not(.home-screen) .assistant-message p{font-size:14px;line-height:1.65}
+.conversation:not(.home-screen) .assistant-message b{font-size:15px}
+.conversation:not(.home-screen) .assistant-mark{width:32px;height:32px;font-size:14px}
+.conversation:not(.home-screen) .stage-row{padding:11px 13px;margin-bottom:6px}
+.conversation:not(.home-screen) .stage-row b{font-size:15px}
+.conversation:not(.home-screen) .stage-row small{font-size:12px}
+.conversation:not(.home-screen) .stage-state{width:25px;height:25px;font-size:12px}
+.conversation:not(.home-screen) .result-block,
+.conversation:not(.home-screen) .question-source,
+.conversation:not(.home-screen) .question-generator,
+.conversation:not(.home-screen) .question-review,
+.conversation:not(.home-screen) .question-result{margin-left:38px;padding:15px 17px;border-radius:14px}
+.conversation:not(.home-screen) .result-block h3,
+.conversation:not(.home-screen) .question-source h3,
+.conversation:not(.home-screen) .question-generator h3{font-size:16px}
+.conversation:not(.home-screen) .result-block>p,
+.conversation:not(.home-screen) .question-source>p,
+.conversation:not(.home-screen) .question-source p{font-size:13px;line-height:1.6}
+.conversation:not(.home-screen) .practice-follow-row button,
+.conversation:not(.home-screen) .practice-source-row button{height:36px;padding:0 13px;font-size:13px}
+.conversation:not(.home-screen) .practice-deliver-card h3{font-size:17px}
+.conversation:not(.home-screen) .practice-deliver-card p{font-size:14px}
+.conversation:not(.home-screen) .practice-saved-tip,.conversation:not(.home-screen) .chat-hint{font-size:13px}
+.conversation:not(.home-screen) .composer-wrap{width:min(820px,calc(100% - 52px));bottom:17px}
+.conversation:not(.home-screen) .workspace-selector{height:29px;margin-left:12px;padding:0 10px;font-size:10px}
+.conversation:not(.home-screen) .composer-card{border-radius:18px}
+.conversation:not(.home-screen) .composer-card textarea{height:75px;padding:13px 16px 4px;font-size:14px}
+.conversation:not(.home-screen) .context-chip{height:30px;padding:0 9px;font-size:12px}
+.conversation:not(.home-screen) .add-button,
+.conversation:not(.home-screen) .send-button,
+.conversation:not(.home-screen) .mode-button{font-size:14px}
+
+/* Reserve the actual height occupied by the large home composer. */
+.conversation.home-screen .composer-wrap{top:150px}
+.conversation.home-screen .home-composer-space{height:235px}
+.conversation.home-screen .home-plaza{position:relative;z-index:1;margin-top:24px}
+.conversation.home-screen.teaching-skills-screen .home-plaza.teaching-plaza{margin-top:250px}
+@media(max-width:1180px){.conversation.home-screen .composer-wrap{top:145px}.conversation.home-screen .home-composer-space{height:245px}}
+
+.knowledge-placeholder{display:grid;place-content:center;gap:10px;min-height:100%;padding:32px;text-align:center;color:#5f7369}
+.knowledge-placeholder b{font-size:18px;color:#1e392e}
+.knowledge-placeholder p{margin:0;font-size:13px;line-height:1.6;max-width:320px}
+.practice-sheet-foot .practice-save-path{
+  color:#829088;
+  font-size:12px;
+  white-space:nowrap;
+}
+
+/* 组题模式使用更紧凑的信息密度。 */
+body.composition-mode .conversation:not(.home-screen) .task-header h1{font-size:17px}
+body.composition-mode .conversation:not(.home-screen) .task-header span{font-size:11px}
+body.composition-mode .conversation:not(.home-screen) .message-column{width:min(760px,calc(100% - 44px));padding-top:20px}
+body.composition-mode .conversation:not(.home-screen) .user-message,
+body.composition-mode .conversation:not(.home-screen) .assistant-message,
+body.composition-mode .conversation:not(.home-screen) .assistant-message p{font-size:13px;line-height:1.55}
+body.composition-mode .conversation:not(.home-screen) .assistant-message b{font-size:14px}
+body.composition-mode .compose-chain{margin:12px 0 0 36px;gap:7px}
+body.composition-mode .compose-step{border-radius:10px}
+body.composition-mode .compose-step-head{padding:10px 12px}
+body.composition-mode .compose-step-mark{width:21px;height:21px;font-size:11px}
+body.composition-mode .conversation:not(.home-screen) .compose-step-head b{font-size:14px}
+body.composition-mode .conversation:not(.home-screen) .compose-step-body,
+body.composition-mode .conversation:not(.home-screen) .compose-table{font-size:12px;line-height:1.5}
+body.composition-mode .compose-step-body{padding:0 12px 12px 43px}
+body.composition-mode .compose-table th,
+body.composition-mode .compose-table td{padding:7px 8px}
+body.composition-mode .compose-chip{padding:5px 8px;font-size:11px}
+body.composition-mode .conversation:not(.home-screen) .courseware-file-copy b{font-size:14px}
+body.composition-mode .conversation:not(.home-screen) .courseware-action{height:34px;padding:0 12px;font-size:12px}
+body.composition-mode .conversation:not(.home-screen) .courseware-result-note{font-size:12px}
+body.composition-mode .conversation:not(.home-screen) .practice-add-trigger,
+body.composition-mode .conversation:not(.home-screen) .practice-add-menu button{font-size:12px}
+
+body.composition-mode .app-shell.preview-open .preview-toolbar strong{font-size:14px}
+body.composition-mode .app-shell.preview-open .preview-toolbar button,
+body.composition-mode .app-shell.preview-open .preview-toolbar a{height:34px;padding:0 10px;font-size:12px}
+body.composition-mode .preview-body.practice-preview{font-size:13px}
+body.composition-mode .conversation:not(.home-screen) .practice-view-tabs button{height:32px;padding:0 12px;font-size:12px;border-radius:8px}
+body.composition-mode .practice-word-page-inner{min-height:0;padding:30px 36px 28px;display:block}
+body.composition-mode .conversation:not(.home-screen) .practice-word-page h1{font-size:19px}
+body.composition-mode .practice-word-school,
+body.composition-mode .practice-word-meta{font-size:11px}
+body.composition-mode .practice-word-body{gap:16px}
+body.composition-mode .conversation:not(.home-screen) .practice-word-q-head b{font-size:12px;line-height:1.6}
+body.composition-mode .practice-word-options{font-size:11px;gap:5px 12px}
+body.composition-mode .practice-sheet-foot button{height:34px;padding:0 12px;font-size:12px}
+.add-menu-body--compose{display:grid;gap:2px;padding:2px 0}
+.add-menu-body--compose button:first-child{border-radius:10px 10px 6px 6px}
+.add-menu-body--compose button:last-child{border-radius:6px 6px 10px 10px}
+
+/* 预览区工具栏：只保留 icon，文件名由上方标签页承担。 */
+.preview-toolbar{justify-content:flex-start;min-height:42px;padding:0 10px}
+.preview-toolbar-actions{display:flex;align-items:center;gap:6px;margin-left:0}
+.preview-toolbar button,.preview-toolbar a{width:32px;height:32px;min-width:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid #e0e5e2;border-radius:8px;background:#fff;color:#405049;text-decoration:none;cursor:pointer;flex:none}
+.preview-toolbar button:hover,.preview-toolbar a:hover{border-color:#8dbda7;background:#edf6f1;color:#087a55}
+.preview-toolbar svg{display:block;width:16px;height:16px;flex:none;overflow:visible}
+.preview-toolbar #zoomButton{width:auto;min-width:32px;padding:0 8px;gap:4px}
+.preview-zoom-label{font-size:10px;font-weight:600;line-height:1;color:#405049}
+.preview-toolbar #annotateButton.is-active,.preview-toolbar #annotateButton[aria-pressed="true"]{background:#e8f4ed;color:#087a55;border-color:#bcd8c8}
+.app-shell.preview-open .preview-toolbar{min-height:42px;padding:0 10px}
+.app-shell.preview-open .preview-toolbar button,.app-shell.preview-open .preview-toolbar a{width:32px!important;height:32px!important;min-width:32px!important;padding:0!important;font-size:0!important}
+.app-shell.preview-open .preview-toolbar .open-button{min-width:32px!important}
+.app-shell.preview-open .preview-toolbar #zoomButton{width:auto!important;min-width:32px!important;padding:0 8px!important}
+.app-shell.preview-open .preview-zoom-label{font-size:10px!important}
+.preview-pane.preview-pane--courseware .preview-toolbar{min-height:38px}
+.preview-pane.preview-pane--courseware .preview-body{padding:14px 16px 18px}
+
+/* 题单预览自带工具栏，只去掉右侧顶部的通用工具条；文件标签栏始终保留。 */
+.preview-pane.preview-pane--sheet .preview-toolbar{display:none!important}
+.preview-pane.preview-pane--sheet .preview-body{flex:1;min-height:0;padding:12px 14px 16px}
+
+/* 双成果任务：两个技能 chip 一亮一灰，点灰色 chip 可切换到它对应的成果。 */
+.composer-skill-slot .skill-chip--active,
+.composer-skill-slot .skill-chip--dim{cursor:pointer}
+.composer-skill-slot .skill-chip--active button,
+.composer-skill-slot .skill-chip--dim button{display:none}
+.composer-skill-slot .skill-chip--active{box-shadow:0 0 0 2px rgba(124,211,166,.4)}
+.composer-skill-slot .skill-chip--dim{background-image:none!important;background:#f0f3f1!important;border:1px solid #dfe5e2!important;color:#96a29a!important;filter:grayscale(1);opacity:.62}
+.composer-skill-slot .skill-chip--dim:hover{opacity:.9;background:#e9efec!important}
+
+body.composition-mode .preview-toolbar{display:none}
+body.composition-mode .preview-body{height:calc(100% - 42px)}
+body.composition-mode .preview-pane.preview-pane--sheet .preview-body,
+.preview-pane.preview-pane--sheet .preview-body{height:auto}
+body.composition-mode .practice-word-header{display:flex;flex-direction:column;padding-bottom:10px;margin-bottom:14px}
+body.composition-mode .practice-word-header{border-bottom:0}
+body.composition-mode .practice-word-meta{order:1;white-space:nowrap;line-height:1.5}
+body.composition-mode .practice-word-page h1{order:2;margin:10px 0 0;font-size:17px;line-height:1.35;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* 参数和双向细目表可直接编辑。 */
+.compose-inline-edit,
+.compose-table td[contenteditable="true"]{
+  border-radius:5px;
+  outline:none;
+  transition:background .15s,box-shadow .15s;
+}
+.compose-inline-edit{display:inline;padding:2px 5px;font-weight:400!important}
+.compose-structure-row{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:start}
+.compose-structure-edit{display:block;min-height:30px;background:#fff;border:1px solid #dce5e0}
+.compose-structure-row button{height:30px;padding:0 9px;border:1px solid #a9cabb;border-radius:7px;background:#edf6f1;color:#087a55;cursor:pointer;font-size:11px;white-space:nowrap}
+.compose-inline-edit:hover,
+.compose-table td[contenteditable="true"]:hover{background:#f3f8f5;box-shadow:inset 0 0 0 1px #bfd7cb}
+.compose-inline-edit:focus,
+.compose-table td[contenteditable="true"]:focus{background:#fff;box-shadow:inset 0 0 0 2px #58a482}
+
+/* Word 预览中悬浮题目即可操作。 */
+.practice-word-q{position:relative;border-radius:8px;transition:background .15s,box-shadow .15s}
+.practice-word-q:hover{background:#f7fbf9;box-shadow:0 0 0 1px #b9d5c8}
+.practice-word-actions{position:absolute;z-index:3;top:-15px;right:6px;display:flex;gap:4px;padding:4px;border:1px solid #dce6e1;border-radius:8px;background:#fff;box-shadow:0 5px 16px rgba(24,56,43,.12);opacity:0;pointer-events:none;transform:translateY(3px);transition:opacity .15s,transform .15s}
+.practice-word-q:hover .practice-word-actions,.practice-word-actions:focus-within{opacity:1;pointer-events:auto;transform:none}
+.practice-word-actions button{height:26px;padding:0 7px;border:0;border-radius:5px;background:transparent;color:#52645b;cursor:pointer;font-size:10px;white-space:nowrap}
+.practice-word-actions button:hover{background:#edf6f1;color:#087a55}
+.practice-word-actions button:last-child:hover{background:#fff1f1;color:#bd3b3b}
+
+/* 添加来源归入右侧题单，不再占用左侧对话区。 */
+.practice-sheet-add{position:relative}
+.practice-sheet-add-menu{position:absolute;z-index:8;left:0;top:calc(100% + 7px);display:none;min-width:170px;padding:6px;border:1px solid #dce6e1;border-radius:9px;background:#fff;box-shadow:0 10px 28px rgba(24,56,43,.14)}
+.practice-sheet-add.open .practice-sheet-add-menu{display:grid}
+.practice-sheet-add-menu button{height:32px!important;padding:0 9px!important;border:0!important;background:transparent!important;color:#42554c;text-align:left;font-size:11px!important}
+.practice-sheet-add-menu button:hover{background:#edf6f1!important;color:#087a55}
+
+.practice-sheet-toolbar{position:sticky;z-index:7;top:0;display:flex;align-items:center;justify-content:flex-end;gap:6px;margin:0 2px 3px;padding:7px 9px;border:1px solid #e0e7e3;border-radius:10px;background:rgba(255,255,255,.96);box-shadow:0 5px 18px rgba(28,55,44,.08);backdrop-filter:blur(8px)}
+.practice-sheet-toolbar>button,.practice-sheet-toolbar .practice-sheet-add>button{position:relative;width:auto!important;height:32px;display:inline-flex;align-items:center;gap:5px;padding:0 8px;border:0;border-radius:6px;background:transparent;color:#42554c;cursor:pointer;font-size:12px;white-space:nowrap}
+.practice-sheet-toolbar>button>span,.practice-sheet-toolbar .practice-sheet-add>button>span{font-size:15px;line-height:1}
+.practice-sheet-toolbar>button:hover,.practice-sheet-toolbar .practice-sheet-add>button:hover{background:#edf6f1;color:#087a55}
+.practice-sheet-toolbar .practice-sheet-add>button{color:#087a55;font-weight:600}
+.practice-sheet-toolbar>button.primary{background:transparent;color:#087a55}
+.practice-sheet-toolbar>button.primary:hover{background:#edf6f1;color:#087a55}
+.practice-sheet-toolbar-divider{width:1px;height:18px;flex:none;background:#e2eae6}
+.practice-sheet-meta{margin-right:auto;color:#819087;font-size:11px;white-space:nowrap}
+.practice-sheet-toolbar .practice-tool-button svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.practice-sheet-toolbar .practice-tool-button b{font-size:12px;font-weight:500;line-height:1}
+.preview-body.practice-preview .practice-sheet-shell{gap:0}
+.preview-body.practice-preview .practice-word-scroll{padding-top:0}
+.preview-body.practice-preview .practice-word-stack{gap:6px}
+
+/* 「接下来可以」是下一步任务的入口，和文件本身的查看/下载分开成两层。 */
+.courseware-next-steps{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:11px;border-top:1px dashed #e2eae6}
+.courseware-next-label{flex:none;color:#8a988f;font-size:12px}
+.courseware-next-action{height:30px;display:inline-flex;align-items:center;gap:6px;padding:0 12px;border:1px solid #cfe4d9;border-radius:15px;background:#fff;color:#087a55;cursor:pointer;font-size:12px;white-space:nowrap}
+.courseware-next-action:hover{border-color:#8dbda7;background:#edf6f1}
+.courseware-next-action svg{width:14px;height:14px;flex:none;display:block}
+
+/* 题与题之间的悬浮插入点：把「改文档」的入口留在纸面上。 */
+.practice-insert-point{position:relative;z-index:4;display:flex;align-items:center;gap:8px;height:18px;margin:-20px 0;opacity:0;transition:opacity .15s}
+.practice-word-body>.practice-insert-point:last-child{margin-bottom:-18px}
+.practice-insert-point:hover,.practice-insert-point:focus-within,.practice-insert-point:has(.practice-q-add-wrap.open){opacity:1}
+.practice-insert-line{flex:1;height:1px;background:#bfe3d1}
+.practice-insert-button{height:22px;display:inline-flex;align-items:center;gap:4px;padding:0 9px;border:1px dashed #8dbda7;border-radius:11px;background:#fff;color:#087a55;cursor:pointer;font-size:10px;white-space:nowrap}
+.practice-insert-button:hover{border-style:solid;background:#edf6f1}
+.practice-insert-button>span{font-size:12px;line-height:1}
+.practice-insert-add .practice-q-add-menu{left:50%;min-width:158px;transform:translateX(-50%)}
+.practice-insert-add .practice-q-add-menu button{height:32px;font-size:11px}
+.practice-word-q [contenteditable="true"]{border-radius:3px;outline:none;cursor:text}
+.practice-word-q [contenteditable="true"]:hover{background:#eef7f2;box-shadow:0 0 0 2px #eef7f2}
+.practice-word-q [contenteditable="true"]:focus{background:#fff;box-shadow:0 0 0 2px #69aa8c}
+.practice-q-prefix{white-space:nowrap}
+.practice-word-section{border-bottom:0}
+.practice-word-q[draggable="true"]{cursor:grab}
+.practice-word-q.dragging{opacity:.45;cursor:grabbing}
+.practice-word-q.drag-over{box-shadow:inset 0 3px 0 #17855f;background:#f2faf6}
+.practice-drag-handle{position:absolute;z-index:4;left:-22px;top:10px;width:18px;height:28px;display:grid;place-items:center;border-radius:5px;color:#a2aea8;font-size:17px;line-height:1;cursor:grab;user-select:none;transition:color .15s,background .15s}
+.practice-word-q:hover .practice-drag-handle{background:#edf6f1;color:#087a55}
+.practice-word-q.dragging .practice-drag-handle{cursor:grabbing}
+body.composition-mode .practice-word-page .practice-word-header h1{font-size:15px!important;font-weight:600;letter-spacing:.02em}
+
+/* AI 组题确认后进入独立工作区，返回时恢复新任务首页。 */
+body.ai-compose-workspace .app-shell{grid-template-columns:minmax(0,1fr)}
+body.ai-compose-workspace .app-shell>.sidebar{display:none}
+body.ai-compose-workspace .demo-badge{display:none}
+body.ai-compose-workspace .app-shell.preview-open .conversation{flex:0 1 36%;width:36%}
+body.ai-compose-workspace .app-shell.preview-open .preview-pane{width:64%;min-width:0;flex:0 0 64%}
+body.ai-compose-workspace .task-header{justify-content:flex-start;gap:12px;padding-left:16px}
+body.ai-compose-workspace .task-header>div{min-width:0}
+body.ai-compose-workspace .task-header>div>span{display:none}
+body.ai-compose-workspace .task-header #replayButton{margin-left:auto}
+.ai-compose-back{height:34px;display:inline-flex;align-items:center;gap:6px;flex:none;padding:0 11px!important;border-color:#d8e2dd!important;color:#315548!important;font-weight:650}
+.ai-compose-back span{display:inline!important;margin:0!important;color:inherit!important;font-size:15px!important;line-height:1}
+.practice-word-footer{display:none}
+.practice-word-page{min-height:0}
+.practice-word-stack{gap:10px}
+
+.home-workbench-links{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;width:min(820px,calc(100% - 52px));margin:0 auto 18px;padding:0 26px}
+.home-workbench-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:16px 18px;border:1px solid #dce6e1;border-radius:14px;background:#fff;color:#20312a;text-decoration:none;box-shadow:0 8px 24px rgba(24,50,40,.05)}
+.home-workbench-card:hover{border-color:#91bea9;box-shadow:0 10px 28px rgba(24,50,40,.08)}
+.home-workbench-card b{grid-column:1;font-size:16px}
+.home-workbench-card small{grid-column:1;color:#788780;font-size:12px;line-height:1.5}
+.home-workbench-card>span{grid-row:1/span 2;align-self:center;color:#087a55;font-size:13px;font-weight:650;white-space:nowrap}
+.home-workbench-card--new{border-color:#cfe4d8;background:linear-gradient(180deg,#fbfefc 0%,#f3faf6 100%)}
+@media (max-width:900px){.home-workbench-links{grid-template-columns:1fr}}
