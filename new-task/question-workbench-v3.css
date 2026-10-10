@@ -779,6 +779,7 @@ body.fx-question-workbench-v3-open { overflow: hidden; }
 .wb3-bulk-overwrite-custom-options > button { min-height: 28px; padding: 0 9px; border: 1px solid var(--wb3-line); border-radius: 7px; background: #fff; color: var(--wb3-green); font-size: 11px; }
 .wb3-bulk-overwrite-custom-options > button:hover { border-color: var(--wb3-green); background: var(--wb3-soft); }
 .wb3-bulk-overwrite-error { margin: 7px 0 0; color: var(--wb3-warning); font-size: 10px; }
+.wb3-bulk-linked-empty { margin: 0; padding: 10px 11px; border: 1px dashed var(--wb3-line); border-radius: 8px; background: var(--wb3-soft); color: var(--wb3-muted); font-size: 10px; }
 
 .wb3-question-label-dialog { width: min(620px, 100%); max-height: calc(100vh - 48px); display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--wb3-line); border-radius: 14px; background: #fff; box-shadow: 0 24px 64px rgba(7,49,35,.22); }
 .wb3-question-label-dialog > header { flex: none; display: flex; align-items: center; gap: 10px; padding: 18px 20px 14px; border-bottom: 1px solid var(--wb3-line); }
