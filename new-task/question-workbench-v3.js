@@ -2382,7 +2382,7 @@
     questionLabelDraft = {
       curriculumTags: [...questionCurriculumTags(question)],
       typeTags: [...questionTypeTags(question)],
-      difficulty: questionDifficultyTags(question)[0] || '中等',
+      difficultyTags: [...questionDifficultyTags(question)],
       knowledgeTags: [...questionKnowledgeTags(question)],
       customTags: [...(question.customTags || [])],
     }
@@ -2411,17 +2411,18 @@
     if (!question || !questionLabelDraft) return
     if (!questionLabelDraft.curriculumTags.length) { showToast('至少保留一个阶段·科目标签'); return }
     if (!questionLabelDraft.typeTags.length) { showToast('至少保留一个题型标签'); return }
+    if (!questionLabelDraft.difficultyTags.length) { showToast('至少保留一个难度标签'); return }
     const allowedKnowledge = knowledgeOptionsForCurriculums(questionLabelDraft.curriculumTags)
     const nextKnowledgeTags = questionLabelDraft.knowledgeTags.filter((tag) => allowedKnowledge.includes(tag))
     const updates = {
       curriculumTags: [...questionLabelDraft.curriculumTags],
       typeTags: [...questionLabelDraft.typeTags],
-      difficultyTags: [questionLabelDraft.difficulty],
+      difficultyTags: [...questionLabelDraft.difficultyTags],
       knowledgeTags: [...nextKnowledgeTags],
       customTags: [...questionLabelDraft.customTags],
       curriculum: questionLabelDraft.curriculumTags[0],
       type: questionLabelDraft.typeTags[0],
-      difficulty: questionLabelDraft.difficulty,
+      difficulty: questionLabelDraft.difficultyTags[0],
       knowledge: nextKnowledgeTags[0] || '',
       labelsManuallyEdited: true,
     }
@@ -2504,7 +2505,7 @@
     const activeCurriculum = questionLabelDraft.curriculumTags[0]
     const curriculumTypeOptions = bankQuestions.filter((item) => item.curriculum === activeCurriculum).map((item) => item.type).filter(Boolean)
     const typeOptions = [...new Set([...curriculumTypeOptions, ...questionLabelDraft.typeTags])]
-    const difficultyOptions = [...new Set([...bankQuestions.map((item) => item.difficulty).filter(Boolean), questionLabelDraft.difficulty])]
+    const difficultyOptions = [...new Set([...bankQuestions.map((item) => item.difficulty).filter(Boolean), ...questionLabelDraft.difficultyTags])]
     const knowledgeOptions = [...new Set([
       ...knowledgeOptionsForCurriculums(questionLabelDraft.curriculumTags),
       ...questionLabelDraft.knowledgeTags,
@@ -2515,7 +2516,7 @@
       <div class="wb3-question-label-editor-body">
         ${questionLabelDropdownMarkup('curriculum', '阶段·科目', Object.keys(curriculumCatalog), questionLabelDraft.curriculumTags, { multiple: false, formatter: curriculumTagLabel })}
         ${questionLabelDropdownMarkup('type', '题型', typeOptions, questionLabelDraft.typeTags)}
-        ${questionLabelDropdownMarkup('difficulty', '难度', difficultyOptions, [questionLabelDraft.difficulty], { multiple: false })}
+        ${questionLabelDropdownMarkup('difficulty', '难度', difficultyOptions, questionLabelDraft.difficultyTags)}
         ${questionLabelDropdownMarkup('knowledge', '知识点', knowledgeOptions, questionLabelDraft.knowledgeTags)}
         <section class="wb3-question-label-editor-group ${questionLabelEditorFocus === 'custom' ? 'focused' : ''} custom" data-question-label-group="custom"><header><b>自定义标签</b><span>自由创建，删除后同步解除所有题目关联</span></header><div>${customOptions.map((value) => questionCustomTagOptionMarkup(value, questionLabelDraft.customTags.includes(value))).join('')}<label class="wb3-custom-tag-compose"><span aria-hidden="true">${icons.plus}</span><input id="wb3NewQuestionCustomTag" maxlength="12" placeholder="新建标签，回车添加" aria-label="新建自定义标签"></label></div></section>
       </div>
@@ -3220,11 +3221,7 @@
         const value = toggleQuestionLabel.dataset.toggleQuestionLabel
         let tagFeedback = ''
         questionLabelEditorFocus = kind || questionLabelEditorFocus
-        if (kind === 'difficulty') {
-          questionLabelDraft.difficulty = value
-          questionLabelDropdownOpen = ''
-          questionLabelDropdownQuery = ''
-        } else if (kind === 'curriculum') {
+        if (kind === 'curriculum') {
           const previousCurriculum = questionLabelDraft.curriculumTags[0]
           if (previousCurriculum) {
             questionLabelCurriculumSnapshots.set(previousCurriculum, {
@@ -3248,12 +3245,16 @@
           questionLabelDropdownOpen = ''
           questionLabelDropdownQuery = ''
         } else {
-          const key = kind === 'curriculum' ? 'curriculumTags' : kind === 'type' ? 'typeTags' : kind === 'knowledge' ? 'knowledgeTags' : kind === 'custom' ? 'customTags' : ''
+          const key = kind === 'curriculum' ? 'curriculumTags' : kind === 'type' ? 'typeTags' : kind === 'difficulty' ? 'difficultyTags' : kind === 'knowledge' ? 'knowledgeTags' : kind === 'custom' ? 'customTags' : ''
           if (!key) return
           const current = [...questionLabelDraft[key]]
           const selected = current.includes(value)
           if (selected && key === 'typeTags' && current.length === 1) {
             showToast('至少保留一个题型标签')
+            return
+          }
+          if (selected && key === 'difficultyTags' && current.length === 1) {
+            showToast('至少保留一个难度标签')
             return
           }
           questionLabelDraft[key] = selected ? current.filter((item) => item !== value) : [...current, value]
