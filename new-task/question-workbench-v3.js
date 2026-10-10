@@ -387,8 +387,14 @@
   let personalImportRecordViewId = ''
   let personalImportReturnScrollTop = 0
   let personalTagEditorQuestionIds = []
+  let bulkSetCurriculumEnabled = false
+  let bulkSetTypeEnabled = false
+  let bulkSetDifficultyEnabled = false
   let bulkSetKnowledgeEnabled = false
   let bulkSetCustomEnabled = false
+  let bulkCurriculumValue = ''
+  let bulkTypeValues = new Set()
+  let bulkDifficultyValue = ''
   let bulkKnowledgeValues = new Set()
   let bulkCustomValues = new Set()
   let bulkKnowledgeQuery = ''
@@ -2534,8 +2540,14 @@
   }
 
   function resetBulkLabelEditorState() {
+    bulkSetCurriculumEnabled = false
+    bulkSetTypeEnabled = false
+    bulkSetDifficultyEnabled = false
     bulkSetKnowledgeEnabled = false
     bulkSetCustomEnabled = false
+    bulkCurriculumValue = ''
+    bulkTypeValues = new Set()
+    bulkDifficultyValue = ''
     bulkKnowledgeValues = new Set()
     bulkCustomValues = new Set()
     bulkKnowledgeQuery = ''
@@ -2566,22 +2578,43 @@
 
   function applyPersonalTags() {
     if (!personalTagEditorQuestionIds.length) return
-    const hasEnabledScope = bulkSetKnowledgeEnabled || bulkSetCustomEnabled
+    const hasEnabledScope = bulkSetCurriculumEnabled || bulkSetTypeEnabled || bulkSetDifficultyEnabled || bulkSetKnowledgeEnabled || bulkSetCustomEnabled
     const selectionValid = hasEnabledScope
+      && (!bulkSetCurriculumEnabled || Boolean(bulkCurriculumValue))
+      && (!bulkSetTypeEnabled || bulkTypeValues.size > 0)
+      && (!bulkSetDifficultyEnabled || Boolean(bulkDifficultyValue))
       && (!bulkSetKnowledgeEnabled || bulkKnowledgeValues.size > 0)
       && (!bulkSetCustomEnabled || bulkCustomValues.size > 0)
     if (!selectionValid) {
       showToast(hasEnabledScope ? '请先选择要统一设置的标签' : '请先选择要设置的标签类型')
       return
     }
+    const curriculumTags = bulkCurriculumValue ? [bulkCurriculumValue] : []
+    const typeTags = [...bulkTypeValues]
+    const difficultyTags = bulkDifficultyValue ? [bulkDifficultyValue] : []
     const knowledgeTags = [...bulkKnowledgeValues]
     const customTags = [...bulkCustomValues]
     const updatedKinds = []
+    if (bulkSetCurriculumEnabled) updatedKinds.push('阶段·科目')
+    if (bulkSetTypeEnabled) updatedKinds.push('题型')
+    if (bulkSetDifficultyEnabled) updatedKinds.push('难度')
     if (bulkSetKnowledgeEnabled) updatedKinds.push('知识点')
     if (bulkSetCustomEnabled) updatedKinds.push('自定义标签')
     let syncedCanvas = false
     personalQuestions.forEach((question) => {
       if (!personalTagEditorQuestionIds.includes(question.id)) return
+      if (bulkSetCurriculumEnabled) {
+        question.curriculumTags = [...curriculumTags]
+        question.curriculum = curriculumTags[0]
+      }
+      if (bulkSetTypeEnabled) {
+        question.typeTags = [...typeTags]
+        question.type = typeTags[0]
+      }
+      if (bulkSetDifficultyEnabled) {
+        question.difficultyTags = [...difficultyTags]
+        question.difficulty = difficultyTags[0]
+      }
       if (bulkSetKnowledgeEnabled) {
         question.knowledgeTags = [...knowledgeTags]
         question.knowledge = knowledgeTags[0] || ''
@@ -2590,6 +2623,18 @@
       question.labelsManuallyEdited = true
       activeDraft.questions.forEach((item) => {
         if (item.status !== 'confirmed' || item.sourceId !== question.id) return
+        if (bulkSetCurriculumEnabled) {
+          item.curriculumTags = [...curriculumTags]
+          item.curriculum = curriculumTags[0]
+        }
+        if (bulkSetTypeEnabled) {
+          item.typeTags = [...typeTags]
+          item.type = typeTags[0]
+        }
+        if (bulkSetDifficultyEnabled) {
+          item.difficultyTags = [...difficultyTags]
+          item.difficulty = difficultyTags[0]
+        }
         if (bulkSetKnowledgeEnabled) {
           item.knowledgeTags = [...knowledgeTags]
           item.knowledge = knowledgeTags[0] || ''
@@ -2604,7 +2649,10 @@
     personalTagEditorQuestionIds = []
     resetBulkLabelEditorState()
     if (syncedCanvas) persistDraft()
+    if (personalCurriculumFilter !== 'all' && !personalCurriculumOptions().includes(personalCurriculumFilter)) personalCurriculumFilter = 'all'
     if (personalKnowledgeFilter !== 'all' && !personalKnowledgeOptions().includes(personalKnowledgeFilter)) personalKnowledgeFilter = 'all'
+    if (filterType !== '全部题型' && !personalQuestions.some((item) => questionTypeTags(item).includes(filterType))) filterType = '全部题型'
+    personalDifficultyFilters = new Set([...personalDifficultyFilters].filter((difficulty) => personalQuestions.some((item) => questionDifficultyTags(item).includes(difficulty))))
     if (personalCollection.startsWith('tag:') && personalCollectionCount(personalCollection) === 0) personalCollection = 'all'
     renderPreservingResultScroll()
     const summary = updatedKinds.join('和')
@@ -2624,22 +2672,29 @@
     if (!targetQuestions.length) return ''
     const targetCount = targetQuestions.length
     const curriculumSignatures = new Set(targetQuestions.map((question) => questionCurriculumTags(question).slice().sort().join('|')))
-    const targetCurriculums = curriculumSignatures.size === 1 ? questionCurriculumTags(targetQuestions[0]) : []
-    const canSetKnowledge = curriculumSignatures.size === 1 && targetCurriculums.length > 0
-    const knowledgeOptions = knowledgeOptionsForCurriculums(targetCurriculums)
+    const commonCurriculum = curriculumSignatures.size === 1 ? questionCurriculumTags(targetQuestions[0])[0] || '' : ''
+    const effectiveCurriculum = bulkSetCurriculumEnabled ? bulkCurriculumValue : commonCurriculum
+    const canSetSubjectLinkedLabels = Boolean(effectiveCurriculum)
+    const knowledgeOptions = knowledgeOptionsForCurriculums(effectiveCurriculum ? [effectiveCurriculum] : [])
+    const typeOptions = [...new Set(bankQuestions.filter((item) => !effectiveCurriculum || item.curriculum === effectiveCurriculum).map((item) => item.type).filter(Boolean))]
+    const difficultyOptions = [...new Set(bankQuestions.map((item) => item.difficulty).filter(Boolean))]
     const query = bulkKnowledgeQuery.trim().toLowerCase()
     const knowledgeMatches = query
       ? knowledgeOptions.filter((tag) => tag.toLowerCase().includes(query) && !bulkKnowledgeValues.has(tag)).slice(0, 8)
       : []
     const availableCustomTags = personalTagOptions().filter((tag) => !bulkCustomValues.has(tag))
-    const selectedValueMarkup = (kind, values) => values.length
-      ? values.map((tag) => `<span class="wb3-bulk-overwrite-value">${escapeHtml(tag)}<button type="button" data-remove-bulk-value="${escapeHtml(tag)}" data-bulk-label-kind="${kind}" aria-label="移除${escapeHtml(tag)}">×</button></span>`).join('')
+    const selectedValueMarkup = (kind, values, formatter = (value) => value) => values.length
+      ? values.map((tag) => `<span class="wb3-bulk-overwrite-value">${escapeHtml(formatter(tag))}<button type="button" data-remove-bulk-value="${escapeHtml(tag)}" data-bulk-label-kind="${kind}" aria-label="移除${escapeHtml(formatter(tag))}">×</button></span>`).join('')
       : '<p>暂未选择</p>'
-    const hasEnabledScope = bulkSetKnowledgeEnabled || bulkSetCustomEnabled
+    const optionButtons = (kind, options, selectedValues, formatter = (value) => value) => `<div class="wb3-bulk-overwrite-options wb3-bulk-overwrite-options-static">${options.map((value) => `<button type="button" class="${selectedValues.includes(value) ? 'selected' : ''}" data-add-bulk-value="${escapeHtml(value)}" data-bulk-label-kind="${kind}"><span>${escapeHtml(formatter(value))}</span>${selectedValues.includes(value) ? '<em>已选</em>' : ''}</button>`).join('') || '<p>没有可选项</p>'}</div>`
+    const hasEnabledScope = bulkSetCurriculumEnabled || bulkSetTypeEnabled || bulkSetDifficultyEnabled || bulkSetKnowledgeEnabled || bulkSetCustomEnabled
     const selectionValid = hasEnabledScope
+      && (!bulkSetCurriculumEnabled || Boolean(bulkCurriculumValue))
+      && (!bulkSetTypeEnabled || bulkTypeValues.size > 0)
+      && (!bulkSetDifficultyEnabled || Boolean(bulkDifficultyValue))
       && (!bulkSetKnowledgeEnabled || bulkKnowledgeValues.size > 0)
       && (!bulkSetCustomEnabled || bulkCustomValues.size > 0)
-    const enabledKinds = [bulkSetKnowledgeEnabled ? '知识点' : '', bulkSetCustomEnabled ? '自定义标签' : ''].filter(Boolean)
+    const enabledKinds = [bulkSetCurriculumEnabled ? '阶段·科目' : '', bulkSetTypeEnabled ? '题型' : '', bulkSetDifficultyEnabled ? '难度' : '', bulkSetKnowledgeEnabled ? '知识点' : '', bulkSetCustomEnabled ? '自定义标签' : ''].filter(Boolean)
     const footerText = selectionValid
       ? `将统一覆盖所选题目的${enabledKinds.join('和')}`
       : hasEnabledScope ? '请为已勾选的类型选择至少一个标签' : '请勾选要统一设置的标签类型；未勾选的保持不变'
@@ -2647,10 +2702,16 @@
       <header><span>${icons.tag}</span><div><h3 id="wb3PersonalTagTitle">批量设置标签</h3><p>已选择 ${targetCount} 道题。仅勾选的标签类型会被统一设置，未勾选的保持不变。</p></div><button type="button" data-close-personal-tag aria-label="关闭">×</button></header>
       <div class="wb3-bulk-label-editor-body">
         <div class="wb3-bulk-overwrite-modes" role="group" aria-label="选择要设置的标签类型">
-          <label class="wb3-bulk-overwrite-card ${bulkSetKnowledgeEnabled ? 'active' : ''} ${canSetKnowledge ? '' : 'disabled'}"><input type="checkbox" data-bulk-label-scope="knowledge" ${bulkSetKnowledgeEnabled ? 'checked' : ''} ${canSetKnowledge ? '' : 'disabled'}><span><b>设置知识点</b><small>${canSetKnowledge ? '勾选后，统一覆盖所选题目的原知识点' : '所选题目阶段·科目不一致，请分批设置'}</small></span></label>
+          <label class="wb3-bulk-overwrite-card ${bulkSetCurriculumEnabled ? 'active' : ''}"><input type="checkbox" data-bulk-label-scope="curriculum" ${bulkSetCurriculumEnabled ? 'checked' : ''}><span><b>设置阶段·科目</b><small>单选，统一所选题目的阶段和科目</small></span></label>
+          <label class="wb3-bulk-overwrite-card ${bulkSetTypeEnabled ? 'active' : ''} ${canSetSubjectLinkedLabels ? '' : 'disabled'}"><input type="checkbox" data-bulk-label-scope="type" ${bulkSetTypeEnabled ? 'checked' : ''} ${canSetSubjectLinkedLabels ? '' : 'disabled'}><span><b>设置题型</b><small>${canSetSubjectLinkedLabels ? '可多选，按当前阶段·科目提供候选' : '请先统一设置阶段·科目'}</small></span></label>
+          <label class="wb3-bulk-overwrite-card ${bulkSetDifficultyEnabled ? 'active' : ''}"><input type="checkbox" data-bulk-label-scope="difficulty" ${bulkSetDifficultyEnabled ? 'checked' : ''}><span><b>设置难度</b><small>单选，统一覆盖所选题目的原难度</small></span></label>
+          <label class="wb3-bulk-overwrite-card ${bulkSetKnowledgeEnabled ? 'active' : ''} ${canSetSubjectLinkedLabels ? '' : 'disabled'}"><input type="checkbox" data-bulk-label-scope="knowledge" ${bulkSetKnowledgeEnabled ? 'checked' : ''} ${canSetSubjectLinkedLabels ? '' : 'disabled'}><span><b>设置知识点</b><small>${canSetSubjectLinkedLabels ? '可多选，按当前阶段·科目提供候选' : '请先统一设置阶段·科目'}</small></span></label>
           <label class="wb3-bulk-overwrite-card ${bulkSetCustomEnabled ? 'active' : ''}"><input type="checkbox" data-bulk-label-scope="custom" ${bulkSetCustomEnabled ? 'checked' : ''}><span><b>设置自定义标签</b><small>勾选后，统一覆盖所选题目的原自定义标签</small></span></label>
         </div>
         <div class="wb3-bulk-overwrite-fields">
+          ${bulkSetCurriculumEnabled ? `<section class="wb3-bulk-overwrite-field"><header><div><b>选择阶段·科目</b><span>单选</span></div><em>将覆盖原阶段·科目</em></header><div class="wb3-bulk-overwrite-selected">${selectedValueMarkup('curriculum', bulkCurriculumValue ? [bulkCurriculumValue] : [], curriculumTagLabel)}</div>${optionButtons('curriculum', Object.keys(curriculumCatalog), bulkCurriculumValue ? [bulkCurriculumValue] : [], curriculumTagLabel)}${bulkCurriculumValue ? '' : '<p class="wb3-bulk-overwrite-error">请选择一个阶段·科目</p>'}</section>` : ''}
+          ${bulkSetTypeEnabled ? `<section class="wb3-bulk-overwrite-field"><header><div><b>选择题型</b><span>可多选</span></div><em>将覆盖原题型</em></header><div class="wb3-bulk-overwrite-selected">${selectedValueMarkup('type', [...bulkTypeValues])}</div>${optionButtons('type', typeOptions, [...bulkTypeValues])}${bulkTypeValues.size ? '' : '<p class="wb3-bulk-overwrite-error">至少选择一个题型后才能保存</p>'}</section>` : ''}
+          ${bulkSetDifficultyEnabled ? `<section class="wb3-bulk-overwrite-field"><header><div><b>选择难度</b><span>单选</span></div><em>将覆盖原难度</em></header><div class="wb3-bulk-overwrite-selected">${selectedValueMarkup('difficulty', bulkDifficultyValue ? [bulkDifficultyValue] : [])}</div>${optionButtons('difficulty', difficultyOptions, bulkDifficultyValue ? [bulkDifficultyValue] : [])}${bulkDifficultyValue ? '' : '<p class="wb3-bulk-overwrite-error">请选择一个难度</p>'}</section>` : ''}
           ${bulkSetKnowledgeEnabled ? `<section class="wb3-bulk-overwrite-field"><header><div><b>选择知识点</b><span>可多选，仅使用飞象标签库</span></div><em>将覆盖原知识点</em></header><div class="wb3-bulk-overwrite-selected">${selectedValueMarkup('knowledge', [...bulkKnowledgeValues])}</div><label class="wb3-bulk-overwrite-search">${icons.search}<input id="wb3BulkKnowledgeSearch" value="${escapeHtml(bulkKnowledgeQuery)}" placeholder="搜索知识点" autocomplete="off"></label>${query ? `<div class="wb3-bulk-overwrite-options">${knowledgeMatches.length ? knowledgeMatches.map((tag) => `<button type="button" data-add-bulk-value="${escapeHtml(tag)}" data-bulk-label-kind="knowledge"><span>${escapeHtml(tag)}</span><em>选择</em></button>`).join('') : '<p>没有匹配的知识点</p>'}</div>` : '<small class="wb3-bulk-overwrite-hint">知识点较多，请输入关键词搜索后选择</small>'}${bulkKnowledgeValues.size ? '' : '<p class="wb3-bulk-overwrite-error">至少选择一个知识点后才能保存</p>'}</section>` : ''}
           ${bulkSetCustomEnabled ? `<section class="wb3-bulk-overwrite-field"><header><div><b>选择自定义标签</b><span>可选择已有标签，也可自由创建</span></div><em>将覆盖原自定义标签</em></header><div class="wb3-bulk-overwrite-selected">${selectedValueMarkup('custom', [...bulkCustomValues])}</div><div class="wb3-bulk-overwrite-custom-options">${availableCustomTags.map((tag) => `<button type="button" data-add-bulk-value="${escapeHtml(tag)}" data-bulk-label-kind="custom">＋ ${escapeHtml(tag)}</button>`).join('')}<label class="wb3-custom-tag-compose"><span aria-hidden="true">${icons.plus}</span><input id="wb3NewPersonalTag" maxlength="12" placeholder="输入后回车新建" aria-label="新建自定义标签"></label></div>${bulkCustomValues.size ? '' : '<p class="wb3-bulk-overwrite-error">至少选择一个自定义标签后才能保存</p>'}</section>` : ''}
         </div>
@@ -3329,17 +3390,41 @@
       if (addBulkValue) {
         const kind = addBulkValue.dataset.bulkLabelKind
         const tag = addBulkValue.dataset.addBulkValue
-        const values = kind === 'knowledge' ? bulkKnowledgeValues : bulkCustomValues
-        values.add(tag)
-        if (kind === 'knowledge') bulkKnowledgeQuery = ''
+        if (kind === 'curriculum') {
+          if (bulkCurriculumValue !== tag) {
+            bulkCurriculumValue = tag
+            bulkTypeValues = new Set()
+            bulkKnowledgeValues = new Set()
+            bulkKnowledgeQuery = ''
+          }
+        } else if (kind === 'difficulty') {
+          bulkDifficultyValue = tag
+        } else if (kind === 'type') {
+          if (bulkTypeValues.has(tag)) bulkTypeValues.delete(tag)
+          else bulkTypeValues.add(tag)
+        } else if (kind === 'knowledge') {
+          bulkKnowledgeValues.add(tag)
+          bulkKnowledgeQuery = ''
+        } else if (kind === 'custom') {
+          bulkCustomValues.add(tag)
+        }
         renderPreservingResultScroll()
         return
       }
 
       const removeBulkValue = event.target.closest('[data-remove-bulk-value]')
       if (removeBulkValue) {
-        const values = removeBulkValue.dataset.bulkLabelKind === 'knowledge' ? bulkKnowledgeValues : bulkCustomValues
-        values.delete(removeBulkValue.dataset.removeBulkValue)
+        const kind = removeBulkValue.dataset.bulkLabelKind
+        const value = removeBulkValue.dataset.removeBulkValue
+        if (kind === 'curriculum') {
+          bulkCurriculumValue = ''
+          bulkTypeValues = new Set()
+          bulkKnowledgeValues = new Set()
+          bulkKnowledgeQuery = ''
+        } else if (kind === 'difficulty') bulkDifficultyValue = ''
+        else if (kind === 'type') bulkTypeValues.delete(value)
+        else if (kind === 'knowledge') bulkKnowledgeValues.delete(value)
+        else if (kind === 'custom') bulkCustomValues.delete(value)
         renderPreservingResultScroll()
         return
       }
@@ -4200,8 +4285,32 @@
 
     root.addEventListener('change', (event) => {
       if (event.target.matches('[data-bulk-label-scope]')) {
-        if (event.target.dataset.bulkLabelScope === 'knowledge') bulkSetKnowledgeEnabled = event.target.checked
-        else bulkSetCustomEnabled = event.target.checked
+        const scope = event.target.dataset.bulkLabelScope
+        const checked = event.target.checked
+        if (scope === 'curriculum') {
+          bulkSetCurriculumEnabled = checked
+          bulkCurriculumValue = ''
+          bulkSetTypeEnabled = false
+          bulkTypeValues = new Set()
+          bulkSetKnowledgeEnabled = false
+          bulkKnowledgeValues = new Set()
+          bulkKnowledgeQuery = ''
+        } else if (scope === 'type') {
+          bulkSetTypeEnabled = checked
+          if (!checked) bulkTypeValues = new Set()
+        } else if (scope === 'difficulty') {
+          bulkSetDifficultyEnabled = checked
+          if (!checked) bulkDifficultyValue = ''
+        } else if (scope === 'knowledge') {
+          bulkSetKnowledgeEnabled = checked
+          if (!checked) {
+            bulkKnowledgeValues = new Set()
+            bulkKnowledgeQuery = ''
+          }
+        } else if (scope === 'custom') {
+          bulkSetCustomEnabled = checked
+          if (!checked) bulkCustomValues = new Set()
+        }
         renderPreservingResultScroll()
         return
       }

@@ -769,9 +769,11 @@ body.fx-question-workbench-v3-open { overflow: hidden; }
 .wb3-bulk-overwrite-options { max-height: 150px; display: grid; gap: 3px; overflow: auto; margin-top: 5px; padding: 5px; border: 1px solid var(--wb3-line); border-radius: 8px; }
 .wb3-bulk-overwrite-options > button { min-height: 30px; display: flex; align-items: center; gap: 8px; padding: 0 8px; border: 0; border-radius: 6px; background: transparent; color: var(--wb3-ink); font-size: 11px; text-align: left; }
 .wb3-bulk-overwrite-options > button:hover { background: var(--wb3-soft); color: var(--wb3-green); }
+.wb3-bulk-overwrite-options > button.selected { background: var(--wb3-soft); color: var(--wb3-green); }
 .wb3-bulk-overwrite-options > button span { min-width: 0; flex: 1; }
 .wb3-bulk-overwrite-options > button em { color: var(--wb3-green); font-size: 10px; font-style: normal; }
 .wb3-bulk-overwrite-options > p { margin: 0; padding: 8px; color: var(--wb3-muted); font-size: 10px; text-align: center; }
+.wb3-bulk-overwrite-options-static { grid-template-columns: repeat(2,minmax(0,1fr)); }
 .wb3-bulk-overwrite-hint { display: block; margin-top: 6px; color: var(--wb3-muted); font-size: 9px; }
 .wb3-bulk-overwrite-custom-options { display: flex; flex-wrap: wrap; gap: 6px; }
 .wb3-bulk-overwrite-custom-options > button { min-height: 28px; padding: 0 9px; border: 1px solid var(--wb3-line); border-radius: 7px; background: #fff; color: var(--wb3-green); font-size: 11px; }
